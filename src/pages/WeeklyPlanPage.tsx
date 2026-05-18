@@ -313,8 +313,8 @@ export default function WeeklyPlanPage() {
           );
         })()}
 
-        <table className="w-full border-collapse text-xs print:text-sm"
-          style={{ backgroundColor: theme.bg, tableLayout: 'fixed' }}>
+        <table className="w-full border-collapse text-xs print:text-sm border-2"
+          style={{ backgroundColor: theme.bg, tableLayout: 'fixed', borderColor: theme.border }}>
           <colgroup>
             <col style={{ width: '70px' }} />
             {[1, 2, 3, 4, 5, 6, 7].map((d) => <col key={d} style={{ width: 'auto' }} />)}
