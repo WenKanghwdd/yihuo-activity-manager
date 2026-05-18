@@ -12,6 +12,7 @@ interface WeeklyPlanState {
   updateCell: (timeSlotId: string, weekday: Weekday, cell: Partial<Omit<WeeklyPlanCell, 'timeSlotId' | 'weekday'>>) => Promise<void>;
   setTheme: (theme: ThemeType) => Promise<void>;
   setTimeRange: (weekday: Weekday, slotId: SlotId, startTime: string, endTime: string) => Promise<void>;
+  batchSetTimeRange: (slotId: SlotId, startTime: string, endTime: string) => Promise<void>;
   clearCell: (timeSlotId: string, weekday: Weekday) => Promise<void>;
   getDayTimeConfig: (weekday: Weekday) => DayTimeConfig;
 }
@@ -89,6 +90,21 @@ export const useWeeklyPlanStore = create<WeeklyPlanState>((set, get) => ({
     const dayConfig = { ...(plan.timeConfig[weekday] || DEFAULT_DAY_TIME_CONFIG) };
     dayConfig[slotId as SlotId] = { startTime, endTime };
     const timeConfig = { ...plan.timeConfig, [weekday]: dayConfig };
+    const updated = { ...plan, timeConfig };
+    await putItem('weeklyPlans', updated);
+    set({ currentPlan: updated });
+  },
+
+  batchSetTimeRange: async (slotId, startTime, endTime) => {
+    const plan = get().currentPlan;
+    if (!plan) return;
+    const timeConfig = { ...plan.timeConfig };
+    for (let d = 1; d <= 7; d++) {
+      const day = d as Weekday;
+      const dayConfig = { ...(timeConfig[day] || DEFAULT_DAY_TIME_CONFIG) };
+      dayConfig[slotId as SlotId] = { startTime, endTime };
+      timeConfig[day] = dayConfig;
+    }
     const updated = { ...plan, timeConfig };
     await putItem('weeklyPlans', updated);
     set({ currentPlan: updated });

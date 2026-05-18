@@ -24,7 +24,7 @@ export default function Layout() {
 
       {/* Sidebar */}
       <aside
-        className={`
+        className={`no-print
           fixed inset-y-0 left-0 z-30 flex w-56 flex-col bg-gradient-to-b from-warm-600 to-warm-700 text-white
           transition-transform duration-300 lg:static lg:translate-x-0
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -72,7 +72,7 @@ export default function Layout() {
       {/* Main content area */}
       <div className="flex flex-1 flex-col">
         {/* Top bar (mobile) */}
-        <header className="flex h-14 items-center gap-3 border-b border-warm-200 bg-white px-4 lg:hidden">
+        <header className="no-print flex h-14 items-center gap-3 border-b border-warm-200 bg-white px-4 lg:hidden">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="rounded-lg p-1.5 text-warm-600 hover:bg-warm-100"
@@ -84,7 +84,7 @@ export default function Layout() {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 print:p-0">
           <Outlet />
         </main>
       </div>

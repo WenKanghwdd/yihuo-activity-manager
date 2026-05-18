@@ -35,6 +35,29 @@ body {
   }
   body {
     background: white !important;
+    color: #000 !important;
+  }
+
+  /* 打印时放大表格字号 */
+  .print\:text-sm { font-size: 14px !important; }
+  .print\:text-base { font-size: 16px !important; }
+  .print\:text-lg  { font-size: 18px !important; }
+
+  table {
+    font-size: 14px !important;
+    width: 100% !important;
+  }
+  th, td {
+    padding: 6px 4px !important;
+  }
+
+  /* 移除页面边距，撑满A4 */
+  #root {
+    width: 100% !important;
+    max-width: 100% !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 }
 

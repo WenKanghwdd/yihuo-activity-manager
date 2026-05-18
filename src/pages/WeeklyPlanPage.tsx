@@ -14,7 +14,7 @@ const SLOT_LABELS: Record<SlotId, string> = { morning: '上午', afternoon: '下
 const SLOT_ORDER: SlotId[] = ['morning', 'afternoon', 'evening'];
 
 export default function WeeklyPlanPage() {
-  const { currentPlan, loaded, loading, loadOrCreatePlan, updateCell, setTheme, setTimeRange, clearCell } =
+  const { currentPlan, loaded, loading, loadOrCreatePlan, updateCell, setTheme, setTimeRange, batchSetTimeRange, clearCell } =
     useWeeklyPlanStore();
   const { currentTheme, setTheme: setAppTheme } = useThemeStore();
   const { activities, loaded: libLoaded, loadActivities } = useActivityLibraryStore();
@@ -95,7 +95,7 @@ export default function WeeklyPlanPage() {
   };
 
   const applyTimeToAll = (slotId: SlotId, start: string, end: string) => {
-    for (let d = 1; d <= 7; d++) setTimeRange(d as Weekday, slotId, start, end);
+    batchSetTimeRange(slotId, start, end);
     setShowAllTimeEdit(false);
   };
 
@@ -200,7 +200,7 @@ export default function WeeklyPlanPage() {
       <div ref={printRef}
         className="w-full max-w-[297mm] mx-auto"
         style={{ minWidth: '700px', backgroundColor: theme.bg }}>
-        <table className="w-full border-collapse text-xs print:text-xs"
+        <table className="w-full border-collapse text-xs print:text-sm"
           style={{ backgroundColor: theme.bg, tableLayout: 'fixed' }}>
           <colgroup>
             <col style={{ width: '70px' }} />
@@ -208,12 +208,12 @@ export default function WeeklyPlanPage() {
           </colgroup>
           <thead>
             <tr>
-              <th className="p-1.5 text-center font-medium border"
+              <th className="p-1.5 text-center font-medium border print:text-base"
                 style={{ backgroundColor: theme.headerBg, color: theme.headerText, borderColor: theme.border }}>
                 时段
               </th>
               {([1, 2, 3, 4, 5, 6, 7] as const).map((day) => (
-                <th key={day} className="p-1.5 text-center font-medium border"
+                <th key={day} className="p-1.5 text-center font-medium border print:text-base"
                   style={{ backgroundColor: theme.headerBg, color: theme.headerText, borderColor: theme.border }}>
                   {WEEKDAY_NAMES[day]}
                 </th>
@@ -226,8 +226,8 @@ export default function WeeklyPlanPage() {
                 {/* 左侧时段标 — 只在这里显示时间 */}
                 <td className="p-2 text-center border align-middle"
                   style={{ backgroundColor: theme.bg, color: theme.cellText, borderColor: theme.border }}>
-                  <div className="font-semibold text-xs">{SLOT_LABELS[slotId]}</div>
-                  <div className="text-[10px] text-warm-500 leading-tight">
+                  <div className="font-semibold text-xs print:text-base">{SLOT_LABELS[slotId]}</div>
+                  <div className="text-[10px] print:text-sm text-warm-500 print:text-gray-700 leading-tight">
                     {currentPlan?.timeConfig?.[1]?.[slotId]?.startTime || '?'}~{currentPlan?.timeConfig?.[1]?.[slotId]?.endTime || '?'}
                   </div>
                 </td>
@@ -265,10 +265,10 @@ export default function WeeklyPlanPage() {
                         </button>
                       )}
 
-                      {/* ===== 活动名称 ===== */}
+                      {/* ===== 活动名称（打印加粗放大） ===== */}
                       {activityName ? (
                         <div
-                          className="text-sm font-medium leading-tight mb-0.5"
+                          className="text-sm print:text-base font-semibold leading-tight mb-0.5"
                           onClick={(e) => {
                             e.stopPropagation();
                             if (act) setDetailActivity(act);
@@ -282,7 +282,7 @@ export default function WeeklyPlanPage() {
                         </div>
                       )}
 
-                      {/* ===== 活动场所（点击选择/编辑） ===== */}
+                      {/* ===== 活动场所（打印加粗） ===== */}
                       {(cell?.venue || activityName) && (
                         <button
                           onClick={(e) => {
@@ -294,16 +294,16 @@ export default function WeeklyPlanPage() {
                               (v) => updateCell(slotId, day as Weekday, { venue: v })
                             );
                           }}
-                          className="w-full text-left text-[10px] text-warm-500 hover:text-warm-700 leading-tight flex items-center gap-0.5 print:no-underline"
+                          className="w-full text-left text-[10px] print:text-xs text-warm-500 print:text-gray-700 hover:text-warm-700 leading-tight flex items-center gap-0.5 print:no-underline"
                         >
-                          <MapPin className="w-2.5 h-2.5 shrink-0" />
+                          <MapPin className="w-2.5 h-2.5 print:w-3 print:h-3 shrink-0" />
                           <span className="truncate">{cell?.venue || '点击选择场所'}</span>
                         </button>
                       )}
 
-                      {/* 备注 */}
+                      {/* 备注 — 打印红色突出 */}
                       {cell?.note && (
-                        <div className={`text-[9px] leading-tight ${outdoor ? 'text-red-600 font-semibold' : 'text-warm-500'}`}>
+                        <div className={`text-[9px] print:text-xs leading-tight ${outdoor ? 'text-red-600 font-semibold' : 'text-warm-500 print:text-gray-600'}`}>
                           {outdoor && '⚠️ '}{cell.note}
                         </div>
                       )}
