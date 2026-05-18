@@ -24,10 +24,7 @@ export default function WeeklyPlanPage() {
   const [detailActivity, setDetailActivity] = useState<Activity | null>(null);
   const [showAllTimeEdit, setShowAllTimeEdit] = useState(false);
 
-  // Per-cell time editing state
-  const [timeEdit, setTimeEdit] = useState<{
-    slotId: SlotId; weekday: number; start: string; end: string;
-  } | null>(null);
+  // Removed per-cell time editing; time only shown in left column
 
   // Unified time editor input values
   const [uniTime, setUniTime] = useState<Record<SlotId, { start: string; end: string }>>({
@@ -92,11 +89,7 @@ export default function WeeklyPlanPage() {
     setShowAllTimeEdit(false);
   };
 
-  const saveTime = () => {
-    if (!timeEdit) return;
-    setTimeRange(timeEdit.weekday as Weekday, timeEdit.slotId, timeEdit.start, timeEdit.end);
-    setTimeEdit(null);
-  };
+  // Time editing is now only via the unified time editor
 
   const filteredActivities = activities.filter((a) =>
     !searchQuery || a.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -220,11 +213,11 @@ export default function WeeklyPlanPage() {
           <tbody>
             {SLOT_ORDER.map((slotId) => (
               <tr key={slotId}>
-                {/* 左侧时段标 */}
-                <td className="p-1.5 text-center border align-middle"
+                {/* 左侧时段标 — 只在这里显示时间 */}
+                <td className="p-2 text-center border align-middle"
                   style={{ backgroundColor: theme.bg, color: theme.cellText, borderColor: theme.border }}>
                   <div className="font-semibold text-xs">{SLOT_LABELS[slotId]}</div>
-                  <div className="text-[9px] text-warm-400 leading-tight no-print">
+                  <div className="text-[10px] text-warm-500 leading-tight">
                     {currentPlan?.timeConfig?.[1]?.[slotId]?.startTime || '?'}~{currentPlan?.timeConfig?.[1]?.[slotId]?.endTime || '?'}
                   </div>
                 </td>
@@ -234,81 +227,38 @@ export default function WeeklyPlanPage() {
                   const activityName = getActivityName(cell);
                   const act = getActivity(cell);
                   const outdoor = hasOutdoorKeyword(cell?.note || '') || hasOutdoorKeyword(activityName);
-                  const dayTimeConfig = currentPlan?.timeConfig?.[day];
-                  const timeRange = dayTimeConfig?.[slotId];
                   const occupied = cellHasActivity(cell);
-                  const isEditing = timeEdit?.slotId === slotId && timeEdit?.weekday === day;
 
                   return (
                     <td key={day}
-                      className="relative p-1 border align-top"
+                      className="relative p-1.5 border align-top cursor-pointer"
                       style={{
                         backgroundColor: theme.cellBg,
                         color: theme.cellText,
                         borderColor: theme.border,
-                        height: '75px',
-                        minHeight: '75px',
+                        height: '80px',
+                        minHeight: '80px',
                       }}
+                      onClick={() => { setPickSlot({ slotId, weekday: day }); setSearchQuery(''); }}
                     >
-                      {/* 本天本时段时间显示 */}
-                      <div className="no-print mb-0.5 flex items-center justify-between">
+                      {/* 移除按钮 — 有活动时显示 */}
+                      {occupied && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setTimeEdit({
-                              slotId, weekday: day,
-                              start: timeRange?.startTime || '08:00',
-                              end: timeRange?.endTime || '11:00',
-                            });
+                            clearCell(slotId, day as Weekday);
                           }}
-                          className="text-[8px] text-warm-400 hover:text-warm-600 transition-colors print:hidden"
+                          className="absolute top-0.5 right-0.5 text-[9px] text-red-400 hover:text-red-600 print:hidden z-20"
+                          title="移除活动"
                         >
-                          {timeRange?.startTime || '?'}~{timeRange?.endTime || '?'}
+                          ✕
                         </button>
-                        {occupied && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              clearCell(slotId, day as Weekday);
-                            }}
-                            className="text-[8px] text-red-400 hover:text-red-600 ml-auto print:hidden"
-                            title="移除活动"
-                          >
-                            ✕ 移除
-                          </button>
-                        )}
-                      </div>
-
-                      {/* ===== 内联时间编辑框 ===== */}
-                      {isEditing && (
-                        <div className="absolute inset-0 z-30 bg-white/98 border-2 border-warm-500 rounded p-1 flex flex-col gap-1"
-                          onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center gap-1">
-                            <input type="time" value={timeEdit.start}
-                              onChange={(e) => setTimeEdit({ ...timeEdit, start: e.target.value })}
-                              className="flex-1 text-[10px] p-0.5 border border-warm-300 rounded" />
-                            <span className="text-[9px] text-warm-400">~</span>
-                            <input type="time" value={timeEdit.end}
-                              onChange={(e) => setTimeEdit({ ...timeEdit, end: e.target.value })}
-                              className="flex-1 text-[10px] p-0.5 border border-warm-300 rounded" />
-                          </div>
-                          <div className="flex gap-1 justify-end">
-                            <button onClick={() => setTimeEdit(null)}
-                              className="px-2 py-0.5 text-[9px] border border-warm-200 rounded">
-                              取消
-                            </button>
-                            <button onClick={saveTime}
-                              className="px-2 py-0.5 text-[9px] bg-warm-500 text-white rounded">
-                              确定
-                            </button>
-                          </div>
-                        </div>
                       )}
 
-                      {/* ===== 活动内容 ===== */}
+                      {/* ===== 活动名称 ===== */}
                       {activityName ? (
                         <div
-                          className="text-sm font-medium cursor-pointer hover:text-warm-600 leading-tight"
+                          className="text-sm font-medium leading-tight mb-0.5"
                           onClick={(e) => {
                             e.stopPropagation();
                             if (act) setDetailActivity(act);
@@ -317,14 +267,28 @@ export default function WeeklyPlanPage() {
                           {activityName}
                         </div>
                       ) : (
-                        <div className="text-[10px] text-warm-300 italic no-print leading-tight">
+                        <div className="text-[10px] text-warm-300 italic leading-tight no-print">
                           点击选择活动
+                        </div>
+                      )}
+
+                      {/* ===== 活动场所（从活动库读取） ===== */}
+                      {act?.venue && (
+                        <div className="text-[10px] text-warm-500 leading-tight mb-0.5">
+                          📍 {act.venue}
+                        </div>
+                      )}
+
+                      {/* 自定义文本中也可能包含场所信息 */}
+                      {!act && cell?.customText && (
+                        <div className="text-[10px] text-warm-500 leading-tight mb-0.5">
+                          📍 (手动输入)
                         </div>
                       )}
 
                       {/* 备注 */}
                       {cell?.note && (
-                        <div className={`text-[9px] mt-0.5 leading-tight ${outdoor ? 'text-red-600 font-semibold' : 'text-warm-500'}`}>
+                        <div className={`text-[9px] leading-tight ${outdoor ? 'text-red-600 font-semibold' : 'text-warm-500'}`}>
                           {outdoor && '⚠️ '}{cell.note}
                         </div>
                       )}
@@ -334,21 +298,6 @@ export default function WeeklyPlanPage() {
                         <img src={cell.imageBase64} alt="活动图片"
                           className="mt-0.5 w-full h-10 object-cover rounded border"
                           style={{ borderColor: theme.border }} />
-                      )}
-
-                      {/* ===== 空单元格点击区域 ===== */}
-                      {!occupied && !isEditing && (
-                        <div className="absolute inset-0 cursor-pointer z-10"
-                          onClick={() => { setPickSlot({ slotId, weekday: day }); setSearchQuery(''); }} />
-                      )}
-
-                      {/* ===== 已有活动时重新点击 ===== */}
-                      {occupied && !isEditing && (
-                        <div className="absolute inset-0 cursor-pointer z-10"
-                          onClick={() => {
-                            setPickSlot({ slotId, weekday: day });
-                            setSearchQuery('');
-                          }} />
                       )}
                     </td>
                   );
