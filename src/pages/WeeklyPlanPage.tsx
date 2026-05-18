@@ -307,7 +307,7 @@ export default function WeeklyPlanPage() {
 
           return (
             <div className="text-center mb-4 print:mb-3">
-              <h2 className="text-xl print:text-2xl font-black text-warm-800 print:text-black" style={{fontFamily:"Microsoft YaHei,MicrosoftYaHei,sans-serif"}}>{title}</h2>
+              <h2 className="text-xl print:text-2xl font-black text-warm-800 " style={{fontFamily:"Microsoft YaHei,MicrosoftYaHei,sans-serif"}}>{title}</h2>
               <p className="text-base font-bold text-warm-500 print:text-gray-600" style={{fontFamily:"SimSun,serif"}}>{subtitle}</p>
             </div>
           );
@@ -340,7 +340,7 @@ export default function WeeklyPlanPage() {
                 <td className="p-2 text-center border-2 align-middle"
                   style={{ backgroundColor: theme.bg, color: theme.cellText, borderColor: theme.border }}>
                   <div className="font-black text-sm print:text-lg">{SLOT_LABELS[slotId]}</div>
-                  <div className="text-[10px] print:text-sm text-warm-500 print:text-gray-700 leading-tight">
+                  <div className="text-[10px] print:text-sm text-warm-500  leading-tight">
                     {currentPlan?.timeConfig?.[1]?.[slotId]?.startTime || '?'}~{currentPlan?.timeConfig?.[1]?.[slotId]?.endTime || '?'}
                   </div>
                 </td>
@@ -465,7 +465,7 @@ export default function WeeklyPlanPage() {
                               (v) => updateCell(slotId, day as Weekday, { venue: v })
                             );
                           }}
-                          className="w-full text-center text-xs print:text-sm text-warm-500 print:text-gray-700 hover:text-warm-700 leading-tight flex items-center justify-center gap-0.5 print:no-underline"
+                          className="w-full text-center text-xs print:text-sm text-warm-500  hover:text-warm-700 leading-tight flex items-center justify-center gap-0.5 print:no-underline"
                         >
                           <MapPin className="w-2.5 h-2.5 print:w-3 print:h-3 shrink-0" />
                           <span className="truncate">{cell?.venue || '点击选择场所'}</span>
@@ -480,7 +480,7 @@ export default function WeeklyPlanPage() {
                         placeholder="提醒..."
                         rows={3}
                         className={`w-full text-center text-xs print:text-sm bg-transparent border-0 border-b border-dashed border-warm-200 outline-none p-0 mt-0.5 leading-tight resize-vertical focus:border-warm-400 print:border-0 ${
-                          outdoor ? 'text-red-600 font-semibold' : 'text-warm-500 print:text-gray-700'
+                          outdoor ? 'text-red-600 font-semibold' : 'text-warm-500 '
                         }`}
                         style={{ minHeight: '24px', overflow: 'hidden' }}
                       />
@@ -495,7 +495,7 @@ export default function WeeklyPlanPage() {
         {/* ===== 天气变化提醒 ===== */}
         <div className="mt-3 print:mt-2">
           <div className="flex items-center justify-center gap-2 mb-1">
-            <span className="text-xl print:text-2xl font-black text-warm-700 print:text-black" style={{fontFamily:"Microsoft YaHei,MicrosoftYaHei,sans-serif"}}>🌤 天气变化提醒</span>
+            <span className="text-xl print:text-2xl font-black text-warm-700 " style={{fontFamily:"Microsoft YaHei,MicrosoftYaHei,sans-serif"}}>🌤 天气变化提醒</span>
           </div>
           <div
             contentEditable
@@ -509,7 +509,7 @@ export default function WeeklyPlanPage() {
                 });
               }
             }}
-            className="w-full text-center text-xl print:text-2xl font-black text-warm-700 print:text-black outline-none"
+            className="w-full text-center text-xl print:text-2xl font-black text-warm-700  outline-none"
             style={{fontFamily:'SimSun,serif', minHeight:'1.5em'}}
           >
             {currentPlan?.weatherReminder || '点击此处添加天气变化提醒...'}
