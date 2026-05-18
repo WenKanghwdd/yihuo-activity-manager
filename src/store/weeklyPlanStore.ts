@@ -13,6 +13,7 @@ interface WeeklyPlanState {
   setTheme: (theme: ThemeType) => Promise<void>;
   setTimeRange: (weekday: Weekday, slotId: SlotId, startTime: string, endTime: string) => Promise<void>;
   batchSetTimeRange: (slotId: SlotId, startTime: string, endTime: string) => Promise<void>;
+  setRemarks: (text: string) => Promise<void>;
   clearCell: (timeSlotId: string, weekday: Weekday) => Promise<void>;
   getDayTimeConfig: (weekday: Weekday) => DayTimeConfig;
 }
@@ -46,6 +47,7 @@ export const useWeeklyPlanStore = create<WeeklyPlanState>((set, get) => ({
         cells: {},
         timeConfig,
         theme: 'default',
+        remarks: '',
       };
       await putItem('weeklyPlans', plan);
     }
@@ -92,6 +94,14 @@ export const useWeeklyPlanStore = create<WeeklyPlanState>((set, get) => ({
     dayConfig[slotId as SlotId] = { startTime, endTime };
     const timeConfig = { ...plan.timeConfig, [weekday]: dayConfig };
     const updated = { ...plan, timeConfig };
+    await putItem('weeklyPlans', updated);
+    set({ currentPlan: updated });
+  },
+
+  setRemarks: async (text) => {
+    const plan = get().currentPlan;
+    if (!plan) return;
+    const updated = { ...plan, remarks: text };
     await putItem('weeklyPlans', updated);
     set({ currentPlan: updated });
   },

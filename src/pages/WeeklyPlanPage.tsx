@@ -12,10 +12,10 @@ import ActivityDetailModal from '../components/activityLibrary/ActivityDetailMod
 import { PRESET_IMAGES } from '../utils/presetImages';
 
 const SLOT_LABELS: Record<SlotId, string> = { morning: '上午', afternoon: '下午', evening: '晚上' };
-const SLOT_ORDER: SlotId[] = ['morning', 'afternoon', 'evening'];
+const SLOT_ORDER: SlotId[] = ['morning', 'afternoon']; // 上午、下午，晚上改为备注
 
 export default function WeeklyPlanPage() {
-  const { currentPlan, loaded, loading, loadOrCreatePlan, updateCell, setTheme, setTimeRange, batchSetTimeRange, clearCell } =
+  const { currentPlan, loaded, loading, loadOrCreatePlan, updateCell, setTheme, setTimeRange, batchSetTimeRange, clearCell, setRemarks } =
     useWeeklyPlanStore();
   const { currentTheme, setTheme: setAppTheme } = useThemeStore();
   const { activities, loaded: libLoaded, loadActivities } = useActivityLibraryStore();
@@ -421,6 +421,50 @@ export default function WeeklyPlanPage() {
             ))}
           </tbody>
         </table>
+
+        {/* ===== 备注/提醒 ===== */}
+        <div className="mt-3 print:mt-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs print:text-sm font-semibold text-warm-700 print:text-black">📋 备注 / 提醒</h3>
+            <button
+              onClick={() => {
+                if (!currentPlan) return;
+                // 自动生成：扫描所有活动
+                const lines: string[] = [];
+                const weekDays = [1,2,3,4,5,6,7];
+                const slotIds = ['morning', 'afternoon'];
+                for (const d of weekDays) {
+                  for (const s of slotIds) {
+                    const cell = getCell(s, d);
+                    if (!cell) continue;
+                    const name = getActivityName(cell);
+                    if (!name) continue;
+                    const act = getActivity(cell);
+                    const outdoor = hasOutdoorKeyword(name) || hasOutdoorKeyword(act?.safetyTips || '');
+                    if (outdoor) {
+                      lines.push(`⚠️ ${WEEKDAY_NAMES[d as Weekday]} ${s === 'morning' ? '上午' : '下午'} "${name}"：外出活动需提前报名并获得家属同意`);
+                    }
+                    if (act?.safetyTips && !outdoor) {
+                      lines.push(`• ${WEEKDAY_NAMES[d as Weekday]} ${s === 'morning' ? '上午' : '下午'} "${name}"：${act.safetyTips.substring(0, 30)}${act.safetyTips.length > 30 ? '...' : ''}`);
+                    }
+                  }
+                }
+                setRemarks(lines.length > 0 ? lines.join('\n') : '（暂无自动提醒）');
+              }}
+              className="text-[10px] text-warm-500 hover:text-warm-700 print:hidden"
+            >
+              自动生成
+            </button>
+          </div>
+          <textarea
+            value={currentPlan?.remarks || ''}
+            onChange={(e) => setRemarks(e.target.value)}
+            placeholder="点击「自动生成」根据活动内容生成提醒，也可手动编辑..."
+            rows={3}
+            className="w-full px-3 py-2 border border-warm-200 rounded-lg text-xs print:text-sm text-warm-700 outline-none focus:ring-2 focus:ring-warm-400 resize-none print:border-0 print:p-0 print:resize-none"
+            style={{ minHeight: '60px' }}
+          />
+        </div>
       </div>
 
       {/* ===== 活动选择弹窗 ===== */}
