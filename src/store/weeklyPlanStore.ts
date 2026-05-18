@@ -51,6 +51,7 @@ export const useWeeklyPlanStore = create<WeeklyPlanState>((set, get) => ({
         timeConfig,
         dayNotes,
         theme: 'default',
+        weatherReminder: '',
       };
       await putItem('weeklyPlans', plan);
     }

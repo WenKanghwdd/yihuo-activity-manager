@@ -51,6 +51,7 @@ export interface WeeklyPlan {
   timeConfig: Record<Weekday, DayTimeConfig>; // per-day time range overrides
   theme: ThemeType;
   dayNotes: Record<Weekday, string>; // 每天备注/提醒
+  weatherReminder: string; // 天气变化提醒
 }
 
 export type ThemeType = 'default' | 'springFestival' | 'qingming' | 'winterSolstice' | 'midAutumn' | 'dragonBoat' | 'nationalDay';

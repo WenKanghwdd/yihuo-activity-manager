@@ -478,8 +478,8 @@ export default function WeeklyPlanPage() {
                         onClick={(e) => e.stopPropagation()}
                         onChange={(e) => updateCell(slotId, day as Weekday, { note: e.target.value })}
                         placeholder="提醒..."
-                        rows={1}
-                        className={`w-full text-[10px] print:text-xs bg-transparent border-0 border-b border-dashed border-warm-200 outline-none p-0 mt-0.5 leading-tight resize-none focus:border-warm-400 print:border-0 ${
+                        rows={3}
+                        className={`w-full text-[10px] print:text-xs bg-transparent border-0 border-b border-dashed border-warm-200 outline-none p-0 mt-0.5 leading-tight resize-vertical focus:border-warm-400 print:border-0 ${
                           outdoor ? 'text-red-600 font-semibold' : 'text-warm-500 print:text-gray-700'
                         }`}
                         style={{ minHeight: '24px', overflow: 'hidden' }}
@@ -491,6 +491,28 @@ export default function WeeklyPlanPage() {
             ))}
           </tbody>
         </table>
+
+        {/* ===== 天气变化提醒 ===== */}
+        <div className="mt-3 print:mt-2">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs print:text-sm font-semibold text-warm-700 print:text-black">🌤 天气变化提醒</span>
+          </div>
+          <textarea
+            value={currentPlan?.weatherReminder || ''}
+            onChange={(e) => {
+              if (currentPlan) {
+                import('../db').then(({ putItem }) => {
+                  putItem('weeklyPlans', { ...currentPlan, weatherReminder: e.target.value }).then(() => {
+                    loadOrCreatePlan(currentPlan.weekStart);
+                  });
+                });
+              }
+            }}
+            placeholder="输入天气变化提醒，如：本周三有降温，注意添衣..."
+            rows={2}
+            className="w-full px-3 py-2 border border-warm-200 rounded-lg text-xs print:text-sm text-warm-700 outline-none focus:ring-2 focus:ring-warm-400 resize-vertical print:border print:border-gray-300"
+          />
+        </div>
       </div>
 
       {/* ===== 活动选择弹窗 ===== */}
