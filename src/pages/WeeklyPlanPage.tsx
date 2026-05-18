@@ -73,7 +73,11 @@ export default function WeeklyPlanPage() {
 
   const handlePickActivity = (activity: Activity) => {
     if (!pickSlot) return;
-    updateCell(pickSlot.slotId, pickSlot.weekday as Weekday, { activityId: activity.id, customText: '' });
+    updateCell(pickSlot.slotId, pickSlot.weekday as Weekday, {
+      activityId: activity.id,
+      customText: '',
+      venue: activity.venue || '',
+    });
     setPickSlot(null);
     setSearchQuery('');
   };
@@ -272,18 +276,18 @@ export default function WeeklyPlanPage() {
                         </div>
                       )}
 
-                      {/* ===== 活动场所（从活动库读取） ===== */}
-                      {act?.venue && (
-                        <div className="text-[10px] text-warm-500 leading-tight mb-0.5">
-                          📍 {act.venue}
-                        </div>
-                      )}
-
-                      {/* 自定义文本中也可能包含场所信息 */}
-                      {!act && cell?.customText && (
-                        <div className="text-[10px] text-warm-500 leading-tight mb-0.5">
-                          📍 (手动输入)
-                        </div>
+                      {/* ===== 活动场所（可点击编辑） ===== */}
+                      {(cell?.venue || activityName) && (
+                        <input
+                          type="text"
+                          value={cell?.venue || ''}
+                          placeholder="点击添加场所"
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => {
+                            updateCell(slotId, day as Weekday, { venue: e.target.value });
+                          }}
+                          className="w-full text-[10px] text-warm-500 bg-transparent border-0 border-b border-dashed border-warm-200 outline-none p-0 leading-tight focus:border-warm-400 print:border-0"
+                        />
                       )}
 
                       {/* 备注 */}
@@ -365,7 +369,8 @@ export default function WeeklyPlanPage() {
               <button onClick={() => {
                 const name = prompt('输入活动名称：');
                 if (name?.trim()) {
-                  updateCell(pickSlot.slotId, pickSlot.weekday as Weekday, { customText: name.trim() });
+                  const venue = prompt('活动场所（可选）：') || '';
+                  updateCell(pickSlot.slotId, pickSlot.weekday as Weekday, { customText: name.trim(), venue });
                   setPickSlot(null); setSearchQuery('');
                 }
               }}

@@ -40,6 +40,7 @@ export interface WeeklyPlanCell {
   customText: string;
   imageBase64: string | null;
   note: string;
+  venue: string; // 可自定义的场所
 }
 
 export interface WeeklyPlan {
