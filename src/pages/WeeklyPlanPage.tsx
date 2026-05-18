@@ -285,13 +285,13 @@ export default function WeeklyPlanPage() {
 
                   return (
                     <td key={day}
-                      className="relative p-1.5 border align-top cursor-pointer"
+                      className="relative p-1.5 border align-top cursor-pointer print:h-[240px]"
                       style={{
                         backgroundColor: theme.cellBg,
                         color: theme.cellText,
                         borderColor: theme.border,
-                        height: '80px',
-                        minHeight: '80px',
+                        height: '200px',
+                        minHeight: '200px',
                       }}
                       onClick={() => { setPickSlot({ slotId, weekday: day }); setSearchQuery(''); }}
                     >
