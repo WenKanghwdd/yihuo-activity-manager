@@ -1,26 +1,36 @@
-import { useEffect, useState, useRef } from 'react';
-import { Printer, Palette, Plus, X, ImagePlus, AlertTriangle } from 'lucide-react';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { Printer, Palette, X, Clock, Search } from 'lucide-react';
 import { useWeeklyPlanStore } from '../store/weeklyPlanStore';
 import { useThemeStore } from '../store/themeStore';
-import { THEME_CONFIGS, DEFAULT_TIME_SLOTS, WEEKDAY_NAMES } from '../types';
-import type { ThemeType, WeeklyPlanCell, Activity } from '../types';
-import ActivityDetailModal from '../components/activityLibrary/ActivityDetailModal';
+import { useActivityLibraryStore } from '../store/activityLibraryStore';
+import { THEME_CONFIGS, WEEKDAY_NAMES } from '../types';
+import type { ThemeType, WeeklyPlanCell, Activity, Weekday, SlotId } from '../types';
 import { hasOutdoorKeyword } from '../utils/helpers';
 import { useReactToPrint } from 'react-to-print';
-import { useActivityLibraryStore } from '../store/activityLibraryStore';
+import ActivityDetailModal from '../components/activityLibrary/ActivityDetailModal';
+
+const SLOT_LABELS: Record<SlotId, string> = {
+  morning: '上午',
+  afternoon: '下午',
+  evening: '晚上',
+};
+
+const SLOT_ORDER: SlotId[] = ['morning', 'afternoon', 'evening'];
 
 export default function WeeklyPlanPage() {
-  const { currentPlan, loaded, loading, loadOrCreatePlan, updateCell, setTheme, clearCell } =
+  const { currentPlan, loaded, loading, loadOrCreatePlan, updateCell, setTheme, setTimeRange, clearCell, getDayTimeConfig } =
     useWeeklyPlanStore();
   const { currentTheme, setTheme: setAppTheme } = useThemeStore();
   const { activities, loaded: libLoaded, loadActivities } = useActivityLibraryStore();
   const printRef = useRef<HTMLDivElement>(null);
-  const [selectedSlot, setSelectedSlot] = useState<{ timeSlotId: string; weekday: number } | null>(null);
   const [showThemePicker, setShowThemePicker] = useState(false);
-  const [showActivityPicker, setShowActivityPicker] = useState(false);
-  const [editingCell, setEditingCell] = useState<{ timeSlotId: string; weekday: number } | null>(null);
-  const [editText, setEditText] = useState('');
+  const [pickSlot, setPickSlot] = useState<{ slotId: string; weekday: number } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [detailActivity, setDetailActivity] = useState<Activity | null>(null);
+  const [showAllTimeEdit, setShowAllTimeEdit] = useState(false);
+  const [allTimeValues, setAllTimeValues] = useState<Record<string, { start: string; end: string }>>({});
+  const [editingTimeDay, setEditingTimeDay] = useState<number | null>(null);
+  const [editingTimeSlot, setEditingTimeSlot] = useState<SlotId | null>(null);
 
   useEffect(() => {
     if (!libLoaded) loadActivities();
@@ -29,11 +39,11 @@ export default function WeeklyPlanPage() {
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    pageStyle: `@page { size: A4 landscape; margin: 10mm; }`,
+    pageStyle: `@page { size: A4 landscape; margin: 8mm; }`,
   });
 
-  const getCell = (timeSlotId: string, weekday: number): WeeklyPlanCell | undefined => {
-    return currentPlan?.cells[`${timeSlotId}-${weekday}`];
+  const getCell = (slotId: string, weekday: number): WeeklyPlanCell | undefined => {
+    return currentPlan?.cells[`${slotId}-${weekday}`];
   };
 
   const getActivityName = (cell?: WeeklyPlanCell): string => {
@@ -46,37 +56,39 @@ export default function WeeklyPlanPage() {
   };
 
   const getActivity = (cell?: WeeklyPlanCell): Activity | undefined => {
-    if (cell?.activityId) {
-      return activities.find((a) => a.id === cell.activityId);
-    }
+    if (cell?.activityId) return activities.find((a) => a.id === cell.activityId);
     return undefined;
   };
 
-  const handleImageUpload = (timeSlotId: string, weekday: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        if (ev.target?.result) {
-          updateCell(timeSlotId, weekday as 1|2|3|4|5|6|7, {
-            imageBase64: ev.target.result as string,
-          });
-        }
-      };
-      reader.readAsDataURL(file);
-    }
+  const handlePickActivity = (activity: Activity) => {
+    if (!pickSlot) return;
+    updateCell(pickSlot.slotId, pickSlot.weekday as Weekday, {
+      activityId: activity.id,
+      customText: '',
+    });
+    setPickSlot(null);
+    setSearchQuery('');
   };
 
-  const handleAddToPlan = (activity: Activity) => {
-    if (selectedSlot) {
-      updateCell(selectedSlot.timeSlotId, selectedSlot.weekday as 1|2|3|4|5|6|7, {
-        activityId: activity.id,
-        customText: '',
-      });
-      setShowActivityPicker(false);
-      setSelectedSlot(null);
-    }
+  const handleClearCell = (slotId: string, weekday: number) => {
+    clearCell(slotId, weekday as Weekday);
   };
+
+  const handleTimeChange = (weekday: number, slotId: SlotId, start: string, end: string) => {
+    setTimeRange(weekday as Weekday, slotId, start, end);
+  };
+
+  const applyTimeToAll = (slotId: SlotId, start: string, end: string) => {
+    for (let d = 1; d <= 7; d++) {
+      setTimeRange(d as Weekday, slotId, start, end);
+    }
+    setShowAllTimeEdit(false);
+  };
+
+  const filteredActivities = activities.filter((a) => {
+    if (!searchQuery) return true;
+    return a.name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   const theme = THEME_CONFIGS[currentTheme];
 
@@ -100,20 +112,30 @@ export default function WeeklyPlanPage() {
           风格模板
         </button>
         <button
-          onClick={() => handlePrint?.()}
-          className="flex items-center gap-1.5 px-3 py-2 bg-warm-500 text-white rounded-lg hover:bg-warm-600 text-sm font-medium transition-colors"
+          onClick={() => { setShowAllTimeEdit(true); }}
+          className="flex items-center gap-1.5 px-3 py-2 bg-white border border-warm-200 rounded-lg hover:bg-warm-50 text-sm text-warm-700 transition-colors"
         >
-          <Printer className="w-4 h-4" />
-          打印
+          <Clock className="w-4 h-4" />
+          统一设置时间
         </button>
         <div className="flex-1" />
         <select
-          onChange={() => handlePrint?.()} // dummy for paper size
+          onChange={(e) => {
+            const paperSize = e.target.value;
+            handlePrint?.();
+          }}
           className="px-3 py-2 border border-warm-200 rounded-lg text-sm text-warm-700 bg-white"
         >
           <option value="A4">A4 横向</option>
           <option value="A3">A3 横向</option>
         </select>
+        <button
+          onClick={() => handlePrint?.()}
+          className="flex items-center gap-1.5 px-4 py-2 bg-warm-500 text-white rounded-lg hover:bg-warm-600 text-sm font-medium transition-colors"
+        >
+          <Printer className="w-4 h-4" />
+          打印
+        </button>
       </div>
 
       {/* Theme Picker */}
@@ -130,15 +152,9 @@ export default function WeeklyPlanPage() {
                   setShowThemePicker(false);
                 }}
                 className={`px-3 py-2 rounded-lg text-sm transition-colors ${
-                  currentTheme === t.key
-                    ? 'ring-2 ring-warm-500 font-medium'
-                    : 'hover:bg-warm-50'
+                  currentTheme === t.key ? 'ring-2 ring-warm-500 font-medium' : 'hover:bg-warm-50'
                 }`}
-                style={{
-                  backgroundColor: t.bg,
-                  color: t.cellText,
-                  borderColor: t.border,
-                }}
+                style={{ backgroundColor: t.bg, color: t.cellText, borderColor: t.border }}
               >
                 {t.label}
               </button>
@@ -147,121 +163,200 @@ export default function WeeklyPlanPage() {
         </div>
       )}
 
-      {/* Activity Picker */}
-      {showActivityPicker && (
+      {/* Unified time editor */}
+      {showAllTimeEdit && (
         <div className="no-print bg-white rounded-xl border border-warm-100 p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-warm-700">从活动库选择</h3>
-            <button
-              onClick={() => {
-                setShowActivityPicker(false);
-                setSelectedSlot(null);
-              }}
-              className="text-warm-400 hover:text-warm-600"
-            >
+            <h3 className="text-sm font-medium text-warm-700">统一设置所有时间</h3>
+            <button onClick={() => setShowAllTimeEdit(false)} className="text-warm-400 hover:text-warm-600">
               <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto">
-            {activities.map((act) => (
-              <button
-                key={act.id}
-                onClick={() => handleAddToPlan(act)}
-                className="px-3 py-2 bg-warm-50 hover:bg-warm-100 rounded-lg text-sm text-warm-700 transition-colors text-left"
-              >
-                {act.name}
-                <span className="ml-2 text-[10px] text-warm-400">
-                  {act.tags.join(', ')}
-                </span>
-              </button>
-            ))}
+          <div className="flex flex-col gap-3">
+            {SLOT_ORDER.map((slotId) => {
+              const cfg = currentPlan?.timeConfig?.[1]?.[slotId] || { startTime: '08:00', endTime: '11:00' };
+              return (
+                <div key={slotId} className="flex items-center gap-3">
+                  <span className="w-12 text-sm text-warm-700 font-medium">{SLOT_LABELS[slotId]}</span>
+                  <input
+                    type="time"
+                    defaultValue={cfg.startTime}
+                    onBlur={(e) => {
+                      const endInput = document.getElementById(`all-${slotId}-end`) as HTMLInputElement;
+                      if (endInput) applyTimeToAll(slotId, e.target.value, endInput.value);
+                    }}
+                    className="px-2 py-1.5 border border-warm-200 rounded-lg text-sm"
+                  />
+                  <span className="text-warm-400 text-sm">至</span>
+                  <input
+                    id={`all-${slotId}-end`}
+                    type="time"
+                    defaultValue={cfg.endTime}
+                    onBlur={(e) => {
+                      const startInput = document.getElementById(`all-${slotId}-start`) as HTMLInputElement;
+                      if (startInput) applyTimeToAll(slotId, startInput.value, e.target.value);
+                    }}
+                    className="px-2 py-1.5 border border-warm-200 rounded-lg text-sm"
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
 
       {/* Weekly Plan Table */}
-      <div
-        ref={printRef}
-        className="overflow-x-auto rounded-xl border"
-        style={{ borderColor: theme.border }}
-      >
-        <table className="w-full min-w-[800px] border-collapse text-sm" style={{ backgroundColor: theme.bg }}>
-          {/* Header Row */}
+      <div ref={printRef} className="overflow-x-auto rounded-xl border" style={{ borderColor: theme.border }}>
+        <table className="w-full min-w-[700px] border-collapse text-sm" style={{ backgroundColor: theme.bg }}>
+          {/* Header */}
           <thead>
             <tr>
               <th
-                className="sticky left-0 z-10 w-28 p-2 text-xs font-medium text-center border-r border-b"
-                style={{
-                  backgroundColor: theme.headerBg,
-                  color: theme.headerText,
-                  borderColor: theme.border,
-                }}
+                className="sticky left-0 z-10 w-24 p-2 text-xs font-medium text-center border-r border-b"
+                style={{ backgroundColor: theme.headerBg, color: theme.headerText, borderColor: theme.border }}
               >
-                时间段
+                时段
               </th>
-              {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+              {([1, 2, 3, 4, 5, 6, 7] as const).map((day) => (
                 <th
                   key={day}
                   className="p-2 font-medium text-center text-xs border-b"
-                  style={{
-                    backgroundColor: theme.headerBg,
-                    color: theme.headerText,
-                    borderColor: theme.border,
-                  }}
+                  style={{ backgroundColor: theme.headerBg, color: theme.headerText, borderColor: theme.border }}
                 >
-                  {WEEKDAY_NAMES[day as 1|2|3|4|5|6|7]}
+                  {WEEKDAY_NAMES[day]}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {DEFAULT_TIME_SLOTS.map((slot) => (
-              <tr key={slot.id}>
+            {SLOT_ORDER.map((slotId) => (
+              <tr key={slotId}>
+                {/* Time slot label with inline time editor */}
                 <td
-                  className="sticky left-0 z-10 p-2 text-xs font-medium border-r border-b whitespace-nowrap"
-                  style={{
-                    backgroundColor: theme.bg,
-                    color: theme.cellText,
-                    borderColor: theme.border,
-                  }}
+                  className="sticky left-0 z-10 p-2 text-xs font-medium border-r border-b align-middle"
+                  style={{ backgroundColor: theme.bg, color: theme.cellText, borderColor: theme.border }}
                 >
-                  {slot.label}
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="font-semibold">{SLOT_LABELS[slotId]}</span>
+                    <div className="no-print flex items-center gap-0.5">
+                      {editingTimeSlot === slotId && editingTimeDay === 0 ? (
+                        <div className="flex gap-0.5">
+                          <input
+                            type="time"
+                            autoFocus
+                            defaultValue={currentPlan?.timeConfig?.[1]?.[slotId]?.startTime || '08:00'}
+                            className="w-14 text-[10px] p-0.5 border border-warm-300 rounded"
+                            onChange={(e) => {
+                              const end = (document.getElementById(`t-all-${slotId}`) as HTMLInputElement)?.value;
+                              if (end) applyTimeToAll(slotId, e.target.value, end);
+                            }}
+                          />
+                          <span className="text-[10px] text-warm-400">至</span>
+                          <input
+                            id={`t-all-${slotId}`}
+                            type="time"
+                            defaultValue={currentPlan?.timeConfig?.[1]?.[slotId]?.endTime || '11:00'}
+                            className="w-14 text-[10px] p-0.5 border border-warm-300 rounded"
+                            onChange={(e) => {
+                              const start = (document.querySelector(`[data-start="${slotId}"]`) as HTMLInputElement)?.value;
+                              if (start) applyTimeToAll(slotId, start, e.target.value);
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingTimeSlot(slotId);
+                            setEditingTimeDay(0);
+                          }}
+                          className="text-[10px] text-warm-400 hover:text-warm-600 underline"
+                        >
+                          {currentPlan?.timeConfig?.[1]?.[slotId]?.startTime || '08:00'}-
+                          {currentPlan?.timeConfig?.[1]?.[slotId]?.endTime || '11:00'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </td>
+
                 {([1, 2, 3, 4, 5, 6, 7] as const).map((day) => {
-                  const cell = getCell(slot.id, day);
+                  const cell = getCell(slotId, day);
                   const activityName = getActivityName(cell);
                   const act = getActivity(cell);
                   const outdoor = hasOutdoorKeyword(cell?.note || '') || hasOutdoorKeyword(activityName);
+                  const dayTimeConfig = currentPlan?.timeConfig?.[day];
+                  const timeRange = dayTimeConfig?.[slotId];
 
                   return (
                     <td
                       key={day}
-                      className="relative p-1.5 border-b border-r align-top min-h-[80px]"
+                      className="relative p-2 border-b border-r align-top cursor-pointer hover:bg-warm-50/50 transition-colors min-h-[90px]"
                       style={{
-                        backgroundColor: theme.cellBg,
+                        backgroundColor: cell ? `${theme.cellBg}` : theme.cellBg,
                         color: theme.cellText,
                         borderColor: theme.border,
                       }}
                       onClick={() => {
-                        setSelectedSlot({ timeSlotId: slot.id, weekday: day });
+                        setPickSlot({ slotId, weekday: day });
+                        setSearchQuery('');
                       }}
                     >
+                      {/* Per-day time editor */}
+                      <div className="no-print mb-1">
+                        {editingTimeSlot === slotId && editingTimeDay === day ? (
+                          <div className="flex gap-0.5 items-center">
+                            <input
+                              type="time"
+                              autoFocus
+                              defaultValue={timeRange?.startTime || '08:00'}
+                              className="w-14 text-[9px] p-0.5 border border-warm-300 rounded"
+                              onBlur={(e) => {
+                                const endEl = document.getElementById(`t-${slotId}-${day}`) as HTMLInputElement;
+                                handleTimeChange(day, slotId, e.target.value, endEl?.value || '11:00');
+                                setEditingTimeSlot(null);
+                                setEditingTimeDay(null);
+                              }}
+                            />
+                            <span className="text-[9px] text-warm-400">~</span>
+                            <input
+                              id={`t-${slotId}-${day}`}
+                              type="time"
+                              defaultValue={timeRange?.endTime || '11:00'}
+                              className="w-14 text-[9px] p-0.5 border border-warm-300 rounded"
+                              onBlur={(e) => {
+                                const startEl = document.querySelector(`[data-start-edit="${slotId}-${day}"]`) as HTMLInputElement;
+                                handleTimeChange(day, slotId, startEl?.value || '08:00', e.target.value);
+                                setEditingTimeSlot(null);
+                                setEditingTimeDay(null);
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingTimeSlot(slotId);
+                              setEditingTimeDay(day);
+                            }}
+                            className="text-[9px] text-warm-400 hover:text-warm-600 underline"
+                          >
+                            {timeRange?.startTime || '?'}~{timeRange?.endTime || '?'}
+                          </button>
+                        )}
+                      </div>
+
                       {/* Image */}
                       {cell?.imageBase64 && (
                         <div className="mb-1">
-                          <img
-                            src={cell.imageBase64}
-                            alt="活动图片"
-                            className="w-20 h-14 object-cover rounded border"
-                            style={{ borderColor: theme.border }}
-                          />
+                          <img src={cell.imageBase64} alt="活动图片" className="w-full h-16 object-cover rounded border" style={{ borderColor: theme.border }} />
                         </div>
                       )}
 
-                      {/* Activity Name */}
+                      {/* Activity name (click to view detail) */}
                       {activityName && (
                         <div
-                          className="text-xs font-medium cursor-pointer hover:text-warm-600 mb-1"
+                          className="text-sm font-medium mb-0.5"
                           onClick={(e) => {
                             e.stopPropagation();
                             if (act) setDetailActivity(act);
@@ -273,122 +368,24 @@ export default function WeeklyPlanPage() {
 
                       {/* Note */}
                       {cell?.note && (
-                        <div
-                          className={`text-[10px] ${outdoor ? 'text-red-600 font-medium' : ''} mb-1`}
-                        >
-                          {outdoor && <AlertTriangle className="w-3 h-3 inline mr-0.5" />}
+                        <div className={`text-[10px] ${outdoor ? 'text-red-600 font-semibold' : 'text-warm-500'} mb-0.5`}>
+                          {outdoor && '⚠️ '}
                           {cell.note}
                         </div>
                       )}
 
-                      {/* Actions */}
-                      <div className="flex gap-1 mt-1 opacity-0 hover:opacity-100 transition-opacity no-print">
-                        <label
-                          className="p-0.5 cursor-pointer text-warm-400 hover:text-warm-600"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <ImagePlus className="w-3 h-3" />
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => handleImageUpload(slot.id, day, e)}
-                          />
-                        </label>
+                      {/* Clear button */}
+                      {cell && (
                         <button
-                          className="p-0.5 text-warm-400 hover:text-warm-600"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setEditingCell({ timeSlotId: slot.id, weekday: day });
-                            setEditText(cell?.customText || '');
+                            handleClearCell(slotId, day);
                           }}
-                          title="编辑文字"
+                          className="absolute top-1 right-1 p-0.5 text-red-300 hover:text-red-500 opacity-0 hover:opacity-100 transition-opacity no-print"
                         >
-                          <Plus className="w-3 h-3" />
+                          <X className="w-3 h-3" />
                         </button>
-                        <button
-                          className="p-0.5 text-warm-400 hover:text-warm-600"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedSlot({ timeSlotId: slot.id, weekday: day });
-                            setShowActivityPicker(true);
-                          }}
-                          title="从活动库选择"
-                        >
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0l-4-4m4 4l-4 4" />
-                          </svg>
-                        </button>
-                        {cell && (
-                          <button
-                            className="p-0.5 text-red-400 hover:text-red-600"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              clearCell(slot.id, day);
-                            }}
-                            title="清空"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Inline edit input */}
-                      {editingCell?.timeSlotId === slot.id && editingCell?.weekday === day && (
-                        <div
-                          className="absolute inset-0 z-20 bg-white/95 border-2 border-warm-500 rounded p-1 flex flex-col"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <textarea
-                            autoFocus
-                            value={editText}
-                            onChange={(e) => setEditText(e.target.value)}
-                            placeholder="直接输入活动内容..."
-                            className="w-full flex-1 text-xs p-1 border-0 outline-none resize-none bg-transparent"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && e.shiftKey) return;
-                              if (e.key === 'Enter') {
-                                updateCell(slot.id, day as 1|2|3|4|5|6|7, { customText: editText });
-                                setEditingCell(null);
-                              }
-                            }}
-                          />
-                          <div className="flex gap-1 justify-end mt-1">
-                            <button
-                              onClick={() => {
-                                updateCell(slot.id, day as 1|2|3|4|5|6|7, { customText: editText });
-                                setEditingCell(null);
-                              }}
-                              className="px-2 py-0.5 text-[10px] bg-warm-500 text-white rounded"
-                            >
-                              确定
-                            </button>
-                            <button
-                              onClick={() => setEditingCell(null)}
-                              className="px-2 py-0.5 text-[10px] border border-warm-200 rounded"
-                            >
-                              取消
-                            </button>
-                          </div>
-                        </div>
                       )}
-
-                      {/* Note input area below cell */}
-                      <div className="mt-1 no-print">
-                        <input
-                          type="text"
-                          placeholder="备注/提醒"
-                          value={cell?.note || ''}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => {
-                            updateCell(slot.id, day as 1|2|3|4|5|6|7, {
-                              note: e.target.value,
-                            });
-                          }}
-                          className="w-full text-[10px] p-0.5 border-0 border-b border-dashed border-warm-200 outline-none bg-transparent focus:border-warm-500"
-                          style={{ color: theme.cellText }}
-                        />
-                      </div>
                     </td>
                   );
                 })}
@@ -398,12 +395,102 @@ export default function WeeklyPlanPage() {
         </table>
       </div>
 
-      {/* Detail Modal */}
-      <ActivityDetailModal
-        activity={detailActivity!}
-        open={!!detailActivity}
-        onClose={() => setDetailActivity(null)}
-      />
+      {/* Activity Picker Modal */}
+      {pickSlot && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => { setPickSlot(null); setSearchQuery(''); }}>
+          <div
+            className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-warm-100 shrink-0">
+              <h3 className="text-base font-semibold text-warm-800">
+                {WEEKDAY_NAMES[pickSlot.weekday as Weekday]} · {SLOT_LABELS[pickSlot.slotId as SlotId]} 选择活动
+              </h3>
+              <button onClick={() => { setPickSlot(null); setSearchQuery(''); }} className="p-1 hover:bg-warm-50 rounded-lg">
+                <X className="w-5 h-5 text-warm-400" />
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="px-5 py-3 border-b border-warm-100">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400" />
+                <input
+                  type="text"
+                  autoFocus
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="搜索活动..."
+                  className="w-full pl-9 pr-3 py-2 border border-warm-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-warm-400"
+                />
+              </div>
+            </div>
+
+            {/* Activity list */}
+            <div className="flex-1 overflow-y-auto px-5 py-3">
+              {filteredActivities.length === 0 ? (
+                <div className="text-center py-10 text-warm-400 text-sm">暂无活动</div>
+              ) : (
+                <div className="space-y-1.5">
+                  {filteredActivities.map((act) => (
+                    <button
+                      key={act.id}
+                      onClick={() => handlePickActivity(act)}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-warm-50 transition-colors text-left border border-transparent hover:border-warm-200"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-warm-100 flex items-center justify-center text-warm-500 text-xs font-bold shrink-0">
+                        {act.name.charAt(0)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-warm-800">{act.name}</p>
+                        <p className="text-xs text-warm-400 truncate">{act.tags.join(' · ')}</p>
+                      </div>
+                      <span className="text-xs text-warm-300 shrink-0">选择 →</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer - quick actions */}
+            <div className="px-5 py-3 border-t border-warm-100 flex gap-2 shrink-0">
+              <button
+                onClick={() => {
+                  const name = prompt('输入活动名称（手动输入）：');
+                  if (name?.trim()) {
+                    updateCell(pickSlot.slotId, pickSlot.weekday as Weekday, { customText: name.trim() });
+                    setPickSlot(null);
+                    setSearchQuery('');
+                  }
+                }}
+                className="flex-1 px-3 py-2 border border-warm-200 rounded-lg text-sm text-warm-600 hover:bg-warm-50 transition-colors"
+              >
+                手动输入
+              </button>
+              <button
+                onClick={() => {
+                  handleClearCell(pickSlot.slotId, pickSlot.weekday);
+                  setPickSlot(null);
+                  setSearchQuery('');
+                }}
+                className="px-3 py-2 border border-red-200 text-red-500 rounded-lg text-sm hover:bg-red-50 transition-colors"
+              >
+                清空
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Activity Detail Modal */}
+      {detailActivity && (
+        <ActivityDetailModal
+          activity={detailActivity}
+          open={!!detailActivity}
+          onClose={() => setDetailActivity(null)}
+        />
+      )}
     </div>
   );
 }

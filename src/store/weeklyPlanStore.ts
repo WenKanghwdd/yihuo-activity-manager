@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import type { WeeklyPlan, WeeklyPlanCell, Weekday, ThemeType } from '../types';
+import type { WeeklyPlan, WeeklyPlanCell, Weekday, ThemeType, DayTimeConfig, SlotId } from '../types';
 import { generateId, getMonday } from '../utils/helpers';
+import { DEFAULT_DAY_TIME_CONFIG } from '../types';
 import { getAll, putItem } from '../db';
 
 interface WeeklyPlanState {
@@ -8,9 +9,11 @@ interface WeeklyPlanState {
   loading: boolean;
   loaded: boolean;
   loadOrCreatePlan: (weekStart?: string) => Promise<void>;
-  updateCell: (timeSlotId: string, weekday: Weekday, cell: Partial<WeeklyPlanCell>) => Promise<void>;
+  updateCell: (timeSlotId: string, weekday: Weekday, cell: Partial<Omit<WeeklyPlanCell, 'timeSlotId' | 'weekday'>>) => Promise<void>;
   setTheme: (theme: ThemeType) => Promise<void>;
+  setTimeRange: (weekday: Weekday, slotId: SlotId, startTime: string, endTime: string) => Promise<void>;
   clearCell: (timeSlotId: string, weekday: Weekday) => Promise<void>;
+  getDayTimeConfig: (weekday: Weekday) => DayTimeConfig;
 }
 
 export const useWeeklyPlanStore = create<WeeklyPlanState>((set, get) => ({
@@ -22,15 +25,25 @@ export const useWeeklyPlanStore = create<WeeklyPlanState>((set, get) => ({
     set({ loading: true });
     const start = weekStart || getMonday();
     
-    // Try to find existing plan for this week
     const allPlans = await getAll<WeeklyPlan>('weeklyPlans');
     let plan = allPlans.find((p) => p.weekStart === start);
     
     if (!plan) {
+      // Initialize default timeConfig for all 7 days
+      const timeConfig: Record<Weekday, DayTimeConfig> = {
+        1: { ...DEFAULT_DAY_TIME_CONFIG },
+        2: { ...DEFAULT_DAY_TIME_CONFIG },
+        3: { ...DEFAULT_DAY_TIME_CONFIG },
+        4: { ...DEFAULT_DAY_TIME_CONFIG },
+        5: { ...DEFAULT_DAY_TIME_CONFIG },
+        6: { ...DEFAULT_DAY_TIME_CONFIG },
+        7: { ...DEFAULT_DAY_TIME_CONFIG },
+      };
       plan = {
         id: generateId(),
         weekStart: start,
         cells: {},
+        timeConfig,
         theme: 'default',
       };
       await putItem('weeklyPlans', plan);
@@ -52,7 +65,7 @@ export const useWeeklyPlanStore = create<WeeklyPlanState>((set, get) => ({
       customText: existingCell?.customText ?? '',
       imageBase64: existingCell?.imageBase64 ?? null,
       note: existingCell?.note ?? '',
-      ...updates,
+      ...(updates as unknown as Partial<WeeklyPlanCell>),
     };
 
     const newCells = { ...plan.cells, [key]: updatedCell };
@@ -69,6 +82,17 @@ export const useWeeklyPlanStore = create<WeeklyPlanState>((set, get) => ({
     set({ currentPlan: updated });
   },
 
+  setTimeRange: async (weekday, slotId, startTime, endTime) => {
+    const plan = get().currentPlan;
+    if (!plan) return;
+    const dayConfig = { ...(plan.timeConfig[weekday] || DEFAULT_DAY_TIME_CONFIG) };
+    dayConfig[slotId as SlotId] = { startTime, endTime };
+    const timeConfig = { ...plan.timeConfig, [weekday]: dayConfig };
+    const updated = { ...plan, timeConfig };
+    await putItem('weeklyPlans', updated);
+    set({ currentPlan: updated });
+  },
+
   clearCell: async (timeSlotId, weekday) => {
     const plan = get().currentPlan;
     if (!plan) return;
@@ -78,5 +102,10 @@ export const useWeeklyPlanStore = create<WeeklyPlanState>((set, get) => ({
     const updated = { ...plan, cells: newCells };
     await putItem('weeklyPlans', updated);
     set({ currentPlan: updated });
+  },
+
+  getDayTimeConfig: (weekday) => {
+    const plan = get().currentPlan;
+    return plan?.timeConfig[weekday] || DEFAULT_DAY_TIME_CONFIG;
   },
 }));

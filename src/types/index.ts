@@ -46,6 +46,7 @@ export interface WeeklyPlan {
   id: string;
   weekStart: string; // ISO date string (Monday)
   cells: Record<string, WeeklyPlanCell>; // key: `${timeSlotId}-${weekday}`
+  timeConfig: Record<Weekday, DayTimeConfig>; // per-day time range overrides
   theme: ThemeType;
 }
 
@@ -90,17 +91,23 @@ export interface ActivityRecord {
   status: ParticipationStatus;
 }
 
-// ===== 默认时间段 =====
+// ===== 默认时间段（早中晚各一个，时间可调） =====
+export type SlotId = 'morning' | 'afternoon' | 'evening';
+
 export const DEFAULT_TIME_SLOTS: TimeSlot[] = [
-  { id: 'morning-1', label: '上午 08:00-09:00', startTime: '08:00', endTime: '09:00' },
-  { id: 'morning-2', label: '上午 09:00-10:00', startTime: '09:00', endTime: '10:00' },
-  { id: 'morning-3', label: '上午 10:00-11:00', startTime: '10:00', endTime: '11:00' },
-  { id: 'noon', label: '中午 11:00-12:00', startTime: '11:00', endTime: '12:00' },
-  { id: 'afternoon-1', label: '下午 14:00-15:00', startTime: '14:00', endTime: '15:00' },
-  { id: 'afternoon-2', label: '下午 15:00-16:00', startTime: '15:00', endTime: '16:00' },
-  { id: 'afternoon-3', label: '下午 16:00-17:00', startTime: '16:00', endTime: '17:00' },
-  { id: 'evening', label: '晚上 18:00-19:30', startTime: '18:00', endTime: '19:30' },
+  { id: 'morning', label: '上午', startTime: '08:00', endTime: '11:00' },
+  { id: 'afternoon', label: '下午', startTime: '14:00', endTime: '17:00' },
+  { id: 'evening', label: '晚上', startTime: '18:00', endTime: '20:00' },
 ];
+
+// 每天各时段的自定义时间范围
+export type DayTimeConfig = Record<SlotId, { startTime: string; endTime: string }>;
+
+export const DEFAULT_DAY_TIME_CONFIG: DayTimeConfig = {
+  morning: { startTime: '08:00', endTime: '11:00' },
+  afternoon: { startTime: '14:00', endTime: '17:00' },
+  evening: { startTime: '18:00', endTime: '20:00' },
+};
 
 export const WEEKDAY_NAMES: Record<Weekday, string> = {
   1: '周一',
