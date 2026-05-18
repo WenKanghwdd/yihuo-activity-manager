@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Printer, Palette, X, Clock, Search, MapPin, Plus } from 'lucide-react';
+import { Printer, Palette, X, Clock, Search, MapPin, Plus, RotateCcw } from 'lucide-react';
 import { useWeeklyPlanStore } from '../store/weeklyPlanStore';
 import { useThemeStore } from '../store/themeStore';
 import { useActivityLibraryStore } from '../store/activityLibraryStore';
@@ -27,6 +27,7 @@ export default function WeeklyPlanPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [detailActivity, setDetailActivity] = useState<Activity | null>(null);
   const [showAllTimeEdit, setShowAllTimeEdit] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showImageGallery, setShowImageGallery] = useState<{ slotId: string; weekday: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingImageSlot, setPendingImageSlot] = useState<{ slotId: string; weekday: number } | null>(null);
@@ -152,6 +153,10 @@ export default function WeeklyPlanPage() {
         <button onClick={() => { syncUniTime(); setShowAllTimeEdit(true); }}
           className="flex items-center gap-1.5 px-3 py-2 bg-white border border-warm-200 rounded-lg hover:bg-warm-50 text-sm text-warm-700 transition-colors">
           <Clock className="w-4 h-4" /> 统一设置时间
+        </button>
+        <button onClick={() => setShowResetConfirm(true)}
+          className="flex items-center gap-1.5 px-3 py-2 bg-white border border-red-200 text-red-500 rounded-lg hover:bg-red-50 text-sm transition-colors">
+          <RotateCcw className="w-4 h-4" /> 重置内容
         </button>
         <div className="flex-1" />
         <select onChange={() => handlePrint?.()}
@@ -285,13 +290,13 @@ export default function WeeklyPlanPage() {
 
                   return (
                     <td key={day}
-                      className="relative p-1.5 border align-top cursor-pointer print:h-[240px]"
+                      className="relative p-1.5 border align-top cursor-pointer print:h-[130px]"
                       style={{
                         backgroundColor: theme.cellBg,
                         color: theme.cellText,
                         borderColor: theme.border,
-                        height: '200px',
-                        minHeight: '200px',
+                        height: '120px',
+                        minHeight: '120px',
                       }}
                       onClick={() => { setPickSlot({ slotId, weekday: day }); setSearchQuery(''); }}
                     >
@@ -601,6 +606,37 @@ export default function WeeklyPlanPage() {
             <p className="text-[10px] text-warm-400 text-center mt-3">
               点击图片选择，也可以返回点击「上传」从本地上传
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* ===== 重置确认弹窗 ===== */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={() => setShowResetConfirm(false)}>
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4"
+            onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-semibold text-warm-800 mb-2">重置活动内容</h3>
+            <p className="text-sm text-warm-600 mb-1">将清空本周所有活动选择、场所、备注和图片。</p>
+            <p className="text-sm text-warm-500 mb-4">⏰ 时间段设置不会改变。</p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setShowResetConfirm(false)}
+                className="px-4 py-2 border border-warm-200 rounded-lg text-sm text-warm-600 hover:bg-warm-50">
+                取消
+              </button>
+              <button onClick={async () => {
+                if (currentPlan) {
+                  const { putItem } = await import('../db');
+                  const updated = { ...currentPlan, cells: {} };
+                  await putItem('weeklyPlans', updated);
+                  useWeeklyPlanStore.getState().loadOrCreatePlan(currentPlan.weekStart);
+                }
+                setShowResetConfirm(false);
+              }}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600">
+                确认重置
+              </button>
+            </div>
           </div>
         </div>
       )}
