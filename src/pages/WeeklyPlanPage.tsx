@@ -205,10 +205,11 @@ export default function WeeklyPlanPage() {
               const act = getActivity(cell);
               const outdoor = hasOutdoorKeyword(name) || hasOutdoorKeyword(act?.safetyTips || '');
               let note = '';
-              if (outdoor) note = '⚠️外出需同意';
+              if (outdoor) note = '⚠️外出活动需提前报名并获家属同意';
               else if (act?.safetyTips) {
-                const short = act.safetyTips.replace(/[。；]/g, '，').split(/[，,]/)[0];
-                note = short.substring(0, 10);
+                // 取第一句要点，控制20-35字
+                const first = act.safetyTips.replace(/[。；]/g, '，').split(/[，]/)[0];
+                note = first.length > 35 ? first.substring(0, 35) + '...' : first;
               }
               if (note) updateCell(s, d, { note });
             }
