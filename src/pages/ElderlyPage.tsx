@@ -5,6 +5,8 @@ import {
   CheckSquare,
   Printer,
   Search,
+  Users,
+  X,
 } from 'lucide-react';
 import { useElderlyStore } from '../store/elderlyStore';
 import { useActivityRecordStore } from '../store/activityRecordStore';
@@ -710,15 +712,4 @@ export default function ElderlyPage() {
   );
 }
 
-// Need to import Users for the empty state
-function Users(props: any) {
-  return <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-  </svg>;
-}
 
-function X(props: any) {
-  return <svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-  </svg>;
-}

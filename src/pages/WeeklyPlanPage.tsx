@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Printer, Palette, Plus, X, ImagePlus, AlertTriangle } from 'lucide-react';
 import { useWeeklyPlanStore } from '../store/weeklyPlanStore';
 import { useThemeStore } from '../store/themeStore';
@@ -108,7 +108,7 @@ export default function WeeklyPlanPage() {
         </button>
         <div className="flex-1" />
         <select
-          onChange={(e) => handlePrint?.()} // dummy for paper size
+          onChange={() => handlePrint?.()} // dummy for paper size
           className="px-3 py-2 border border-warm-200 rounded-lg text-sm text-warm-700 bg-white"
         >
           <option value="A4">A4 横向</option>

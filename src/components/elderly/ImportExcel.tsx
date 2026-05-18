@@ -8,8 +8,9 @@ interface ImportExcelProps {
 }
 
 export default function ImportExcel({ onClose }: ImportExcelProps) {
-  const { groups, addGroup, importElderly } = useElderlyStore();
+  const { groups, importElderly } = useElderlyStore();
   const fileRef = useRef<HTMLInputElement>(null);
+  const [allData, setAllData] = useState<Record<string, string>[] | null>(null);
   const [preview, setPreview] = useState<Record<string, string>[] | null>(null);
   const [groupName, setGroupName] = useState('');
   const [newGroupName, setNewGroupName] = useState('');
@@ -33,6 +34,7 @@ export default function ImportExcel({ onClose }: ImportExcelProps) {
         setMessage('文件中没有数据');
         return;
       }
+      setAllData(data);
       setPreview(data.slice(0, 5));
       setStatus('preview');
 
@@ -52,17 +54,9 @@ export default function ImportExcel({ onClose }: ImportExcelProps) {
   };
 
   const handleImport = async () => {
-    if (!preview || preview.length === 0) return;
+    if (!allData || allData.length === 0) return;
     const name = groupName || newGroupName || '导入名单';
     try {
-      const allData = await new Promise<Record<string, string>[]>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          const data = await readExcelFile(new File([e.target?.result as Blob], ''));
-          resolve(data);
-        };
-        reader.readAsArrayBuffer(fileRef.current?.files?.[0] as Blob);
-      });
       await importElderly(allData, name);
       setStatus('success');
       setMessage(`成功导入 ${allData.length} 位老人到 "${name}" 分组`);
