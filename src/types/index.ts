@@ -39,6 +39,7 @@ export interface WeeklyPlanCell {
   activityId: string | null;
   customText: string;
   imageBase64: string | null;
+  imageHeight: number; // 图片显示高度 px
   note: string;
   venue: string; // 可自定义的场所
 }
