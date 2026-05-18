@@ -321,13 +321,13 @@ export default function WeeklyPlanPage() {
           </colgroup>
           <thead>
             <tr>
-              <th className="p-1.5 text-center font-black border text-sm print:text-lg"
-                style={{ backgroundColor: theme.headerBg, color: theme.headerText, borderColor: theme.border }}>
+              <th className="p-1.5 text-center font-black border-2 text-sm print:text-lg"
+                style={{fontFamily:'SimHei,sans-serif', backgroundColor: theme.headerBg, color: theme.headerText, borderColor: theme.border }}>
                 时段
               </th>
               {([1, 2, 3, 4, 5, 6, 7] as const).map((day) => (
-                <th key={day} className="p-1.5 text-center font-black border text-sm print:text-lg"
-                  style={{ backgroundColor: theme.headerBg, color: theme.headerText, borderColor: theme.border }}>
+                <th key={day} className="p-1.5 text-center font-black border-2 text-sm print:text-lg"
+                  style={{fontFamily:'SimHei,sans-serif', backgroundColor: theme.headerBg, color: theme.headerText, borderColor: theme.border }}>
                   {WEEKDAY_NAMES[day]}
                 </th>
               ))}
@@ -337,7 +337,7 @@ export default function WeeklyPlanPage() {
             {SLOT_ORDER.map((slotId) => (
               <tr key={slotId}>
                 {/* 左侧时段标 — 只在这里显示时间 */}
-                <td className="p-2 text-center border align-middle"
+                <td className="p-2 text-center border-2 align-middle"
                   style={{ backgroundColor: theme.bg, color: theme.cellText, borderColor: theme.border }}>
                   <div className="font-black text-sm print:text-lg">{SLOT_LABELS[slotId]}</div>
                   <div className="text-[10px] print:text-sm text-warm-500 print:text-gray-700 leading-tight">
@@ -354,7 +354,7 @@ export default function WeeklyPlanPage() {
 
                   return (
                     <td key={day}
-                      className="relative p-1.5 border align-top cursor-pointer print:h-[214px]"
+                      className="relative p-1.5 border-2 align-top cursor-pointer print:h-[214px]"
                       style={{
                         backgroundColor: theme.cellBg,
                         color: theme.cellText,
