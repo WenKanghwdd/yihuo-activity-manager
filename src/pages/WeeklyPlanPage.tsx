@@ -261,26 +261,30 @@ export default function WeeklyPlanPage() {
           className="flex items-center gap-1.5 px-3 py-2 bg-white border border-warm-200 rounded-lg hover:bg-warm-50 text-sm text-warm-700 transition-colors">
           <Clock className="w-4 h-4" /> 统一设置时间
         </button>
-        <button onClick={() => {
+        <button onClick={async () => {
           if (!currentPlan) return;
+          const newCells = { ...currentPlan.cells };
           for (const d of [1,2,3,4,5,6,7] as Weekday[]) {
             for (const s of ['morning', 'afternoon']) {
-              const cell = getCell(s, d);
+              const key = s + '-' + d;
+              const cell = newCells[key];
               if (!cell) continue;
-              const name = getActivityName(cell);
+              const name = cell.customText || (cell.activityId ? (activities.find(a => a.id === cell.activityId)?.name || '') : '');
               if (!name) continue;
-              const act = getActivity(cell);
+              const act = cell.activityId ? activities.find(a => a.id === cell.activityId) : undefined;
               const outdoor = hasOutdoorKeyword(name) || hasOutdoorKeyword(act?.safetyTips || '');
               let note = '';
               if (outdoor) note = '⚠️外出活动需提前报名并获家属同意';
               else if (act?.safetyTips) {
-                // 取第一句要点，控制20-35字
                 const first = act.safetyTips.replace(/[。；]/g, '，').split(/[，]/)[0];
                 note = first.length > 35 ? first.substring(0, 35) + '...' : first;
               }
-              if (note) updateCell(s, d, { note });
+              if (note) newCells[key] = { ...cell, note };
             }
           }
+          const { putItem } = await import('../db');
+          await putItem('weeklyPlans', { ...currentPlan, cells: newCells });
+          useWeeklyPlanStore.getState().loadOrCreatePlan(currentPlan.weekStart);
         }}
           className="flex items-center gap-1.5 px-3 py-2 bg-white border border-warm-200 rounded-lg hover:bg-warm-50 text-sm text-warm-700 transition-colors">
           自动提醒
