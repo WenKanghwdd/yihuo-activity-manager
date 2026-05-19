@@ -146,6 +146,8 @@ export default function WeeklyPlanPage() {
     const savedVenue = venueStore.getActivityVenue(activity.id);
     const matchedImage = matchPresetImage(activity);
     const savedImage = venueStore.getActivityVenue(activity.id + '_img');
+    const savedOX = venueStore.getActivityVenue(activity.id + '_ox');
+    const savedOY = venueStore.getActivityVenue(activity.id + '_oy');
     // 图片优先级：活动库图片 > 手动记忆图片 > 自动匹配 > 无
     const activityImg = activity.images?.[0] || '';
     updateCell(pickSlot.slotId, pickSlot.weekday as Weekday, {
@@ -153,6 +155,8 @@ export default function WeeklyPlanPage() {
       customText: '',
       venue: savedVenue || activity.venue || '',
       imageBase64: activityImg || savedImage || matchedImage || '',
+      imageOffsetX: savedOX ? Number(savedOX) : 50,
+      imageOffsetY: savedOY ? Number(savedOY) : 50,
     });
     // 记住图片，下次优先使用活动库的
     if (activityImg) {
@@ -951,6 +955,12 @@ export default function WeeklyPlanPage() {
                     imageOffsetX: cropPos.x,
                     imageOffsetY: cropPos.y,
                   });
+                  // 同步裁剪到活动库记忆
+                  const cell = getCell(cropSlot.slotId, cropSlot.weekday);
+                  if (cell?.activityId) {
+                    venueStore.setActivityVenue(cell.activityId + '_ox', String(cropPos.x));
+                    venueStore.setActivityVenue(cell.activityId + '_oy', String(cropPos.y));
+                  }
                   setCropSlot(null);
                 }}
                   className="px-4 py-2 bg-warm-500 text-white rounded-lg text-sm hover:bg-warm-600">确认</button>
