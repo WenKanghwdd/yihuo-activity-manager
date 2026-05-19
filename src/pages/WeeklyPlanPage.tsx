@@ -489,7 +489,7 @@ export default function WeeklyPlanPage() {
 
                   return (
                     <td key={day}
-                      className="relative p-1.5 border-2 align-top cursor-pointer print:h-[214px]"
+                      className="relative p-1.5 border-2 align-top cursor-pointer print:h-[160px]"
                       style={{
                         backgroundColor: theme.cellBg,
                         color: theme.cellText,
@@ -633,7 +633,7 @@ export default function WeeklyPlanPage() {
                           onClick={(e) => e.stopPropagation()}
                           onChange={(e) => updateCell(slotId, day as Weekday, { note: e.target.value })}
                           placeholder="提醒..."
-                          rows={3}
+                          rows={2}
                           className={`w-full text-center text-xs print:text-sm leading-tight px-1 py-0.5 rounded resize-vertical outline-none ${
                             outdoor ? 'text-red-600 font-semibold' : 'text-warm-500'
                           }`}
