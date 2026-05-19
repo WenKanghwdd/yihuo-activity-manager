@@ -150,6 +150,15 @@ export default function WeeklyPlanPage() {
     const savedOY = venueStore.getActivityVenue(activity.id + '_oy');
     // 图片优先级：活动库图片 > 手动记忆图片 > 自动匹配 > 无
     const activityImg = activity.images?.[0] || '';
+    // 自动填写提醒（安全提示）
+    const outdoor = hasOutdoorKeyword(activity.name) || hasOutdoorKeyword(activity.safetyTips || '');
+    let autoNote = '';
+    if (outdoor) autoNote = '⚠️外出活动需提前报名并获家属同意';
+    else if (activity.safetyTips) {
+      const first = activity.safetyTips.replace(/[。；]/g, '，').split(/[，]/)[0];
+      autoNote = first.length > 35 ? first.substring(0, 35) + '...' : first;
+    }
+
     updateCell(pickSlot.slotId, pickSlot.weekday as Weekday, {
       activityId: activity.id,
       customText: '',
@@ -157,6 +166,7 @@ export default function WeeklyPlanPage() {
       imageBase64: activityImg || savedImage || matchedImage || '',
       imageOffsetX: savedOX ? Number(savedOX) : 50,
       imageOffsetY: savedOY ? Number(savedOY) : 50,
+      note: autoNote,
     });
     // 记住图片，下次优先使用活动库的
     if (activityImg) {
