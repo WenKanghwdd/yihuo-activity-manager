@@ -34,11 +34,17 @@ export default function WeeklyPlanPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingImageSlot, setPendingImageSlot] = useState<{ slotId: string; weekday: number } | null>(null);
 
-  // 保存图片到活动记忆
+  // 保存图片到活动库 & 记忆（双向同步，后修改的覆盖）
   const saveImageToActivity = (slotId: string, weekday: number, data: string) => {
     const cell = getCell(slotId, weekday);
-    if (cell?.activityId) {
-      venueStore.setActivityVenue(cell.activityId + '_img', data);
+    if (!cell?.activityId) return;
+    // 保存到记忆
+    venueStore.setActivityVenue(cell.activityId + '_img', data);
+    // 也保存到活动库
+    const act = activities.find(a => a.id === cell.activityId);
+    if (act) {
+      const { updateActivity } = useActivityLibraryStore.getState();
+      updateActivity({ ...act, images: [data, ...act.images.filter(i => i !== data)] });
     }
   };
 
@@ -138,16 +144,18 @@ export default function WeeklyPlanPage() {
     const savedVenue = venueStore.getActivityVenue(activity.id);
     const matchedImage = matchPresetImage(activity);
     const savedImage = venueStore.getActivityVenue(activity.id + '_img');
-    // 优先使用活动库上传的图片，其次手动记忆的，再其次自动匹配
+    // 图片优先级：活动库图片 > 手动记忆图片 > 自动匹配 > 无
     const activityImg = activity.images?.[0] || '';
     updateCell(pickSlot.slotId, pickSlot.weekday as Weekday, {
       activityId: activity.id,
       customText: '',
       venue: savedVenue || activity.venue || '',
-      imageBase64: savedImage || activityImg || matchedImage || '',
+      imageBase64: activityImg || savedImage || matchedImage || '',
     });
-    // 记住自动匹配的图片
-    if (matchedImage && !savedImage && !activityImg) {
+    // 记住图片，下次优先使用活动库的
+    if (activityImg) {
+      venueStore.setActivityVenue(activity.id + '_img', activityImg);
+    } else if (matchedImage && !savedImage) {
       venueStore.setActivityVenue(activity.id + '_img', matchedImage);
     }
     setPickSlot(null);
