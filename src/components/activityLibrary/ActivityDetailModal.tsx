@@ -19,10 +19,11 @@ export default function ActivityDetailModal({
 }: ActivityDetailModalProps) {
   const { updateActivity } = useActivityLibraryStore();
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ ...activity, equipment: activity.equipment.join('\n') });
+  const safeAct = activity || { id:'', name:'', tags:[], images:[], description:'', venue:'', equipment:[], minStaff:1, safetyTips:'', buyLink:'' };
+  const [form, setForm] = useState({ ...safeAct, equipment: safeAct.equipment.join('\n') });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [buyLinkEdit, setBuyLinkEdit] = useState(false);
-  const [buyLinkVal, setBuyLinkVal] = useState(activity.buyLink);
+  const [buyLinkVal, setBuyLinkVal] = useState(safeAct.buyLink);
 
   useEffect(() => {
     if (open) {

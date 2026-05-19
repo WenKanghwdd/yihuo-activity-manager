@@ -137,16 +137,17 @@ export default function WeeklyPlanPage() {
     if (!pickSlot) return;
     const savedVenue = venueStore.getActivityVenue(activity.id);
     const matchedImage = matchPresetImage(activity);
-    // 看看之前有没有记住的图片
     const savedImage = venueStore.getActivityVenue(activity.id + '_img');
+    // 优先使用活动库上传的图片，其次手动记忆的，再其次自动匹配
+    const activityImg = activity.images?.[0] || '';
     updateCell(pickSlot.slotId, pickSlot.weekday as Weekday, {
       activityId: activity.id,
       customText: '',
       venue: savedVenue || activity.venue || '',
-      imageBase64: savedImage || matchedImage || '',
+      imageBase64: savedImage || activityImg || matchedImage || '',
     });
     // 记住自动匹配的图片
-    if (matchedImage && !savedImage) {
+    if (matchedImage && !savedImage && !activityImg) {
       venueStore.setActivityVenue(activity.id + '_img', matchedImage);
     }
     setPickSlot(null);
