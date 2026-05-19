@@ -257,6 +257,35 @@ export default function WeeklyPlanPage() {
         </button>
         <div className="w-px h-6 bg-warm-200" />
 
+        <button onClick={async () => {
+          if (!currentPlan) return;
+          const { getAll, putItem } = await import('../db');
+          // 尝试找上周、上上周的计划
+          const parts = targetWeekStart.split('-').map(Number);
+          let sourcePlan = null;
+          for (let offset = 7; offset <= 14; offset += 7) {
+            const d = new Date(parts[0], parts[1] - 1, parts[2] - offset);
+            const srcStart = d.getFullYear() + '-' +
+              String(d.getMonth() + 1).padStart(2, '0') + '-' +
+              String(d.getDate()).padStart(2, '0');
+            const all = await getAll('weeklyPlans') as any[];
+            sourcePlan = all.find((p: any) => p.weekStart === srcStart);
+            if (sourcePlan) break;
+          }
+          if (!sourcePlan) { alert('未找到上周或上上周的计划'); return; }
+          // 复制 cells 和 dayNotes
+          const updated = {
+            ...currentPlan,
+            cells: { ...sourcePlan.cells },
+            dayNotes: { ...sourcePlan.dayNotes },
+          };
+          await putItem('weeklyPlans', updated);
+          useWeeklyPlanStore.getState().loadOrCreatePlan(currentPlan.weekStart);
+        }}
+          className="flex items-center gap-1.5 px-3 py-2 bg-white border border-warm-200 rounded-lg hover:bg-warm-50 text-sm text-warm-700 transition-colors">
+          从上周复制
+        </button>
+
         <button onClick={() => { syncUniTime(); setShowAllTimeEdit(true); }}
           className="flex items-center gap-1.5 px-3 py-2 bg-white border border-warm-200 rounded-lg hover:bg-warm-50 text-sm text-warm-700 transition-colors">
           <Clock className="w-4 h-4" /> 统一设置时间
