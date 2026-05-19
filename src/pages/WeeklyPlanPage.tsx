@@ -429,7 +429,14 @@ export default function WeeklyPlanPage() {
               {([1, 2, 3, 4, 5, 6, 7] as const).map((day) => (
                 <th key={day} className="p-1.5 text-center font-black border-2 text-sm print:text-lg"
                   style={{fontFamily:'SimHei,sans-serif', backgroundColor: theme.headerBg, color: theme.headerText, borderColor: theme.border }}>
-                  {WEEKDAY_NAMES[day]}
+                  <div>{WEEKDAY_NAMES[day]}</div>
+                  <div className="text-[10px] print:text-sm font-normal opacity-80">
+                    {currentPlan ? (() => {
+                      const d = new Date(currentPlan.weekStart);
+                      d.setDate(d.getDate() + day - 1);
+                      return (d.getMonth() + 1) + '/' + d.getDate();
+                    })() : ''}
+                  </div>
                 </th>
               ))}
             </tr>
