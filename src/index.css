@@ -42,6 +42,12 @@ body {
   .print\:text-base { font-size: 16px !important; }
   .print\:text-lg  { font-size: 18px !important; }
 
+  /* 强制打印背景色（主题风格） */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   table {
     font-size: 14px !important;
     width: 100% !important;
