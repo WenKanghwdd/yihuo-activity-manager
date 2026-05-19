@@ -91,12 +91,9 @@ export default function WeeklyPlanPage() {
   useEffect(() => {
     if (!libLoaded) loadActivities();
     if (!venueStore.loaded) venueStore.loadAll();
-  }, [libLoaded, loadActivities, venueStore.loaded, venueStore.loadAll]);
-
-  // 周计划切换
-  useEffect(() => {
     useWeeklyPlanStore.getState().loadOrCreatePlan(targetWeekStart);
-  }, [targetWeekStart]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
@@ -200,19 +197,27 @@ export default function WeeklyPlanPage() {
         <button onClick={() => {
           const d = new Date(targetWeekStart);
           d.setDate(d.getDate() - 7);
-          setTargetWeekStart(getMonday(d));
+          const next = getMonday(d);
+          setTargetWeekStart(next);
+          useWeeklyPlanStore.getState().loadOrCreatePlan(next);
         }}
           className="flex items-center gap-1 px-3 py-2 bg-white border border-warm-200 rounded-lg hover:bg-warm-50 text-sm text-warm-700 transition-colors">
           ← 上周
         </button>
-        <button onClick={() => setTargetWeekStart(getMonday(new Date()))}
+        <button onClick={() => {
+          const next = getMonday(new Date());
+          setTargetWeekStart(next);
+          useWeeklyPlanStore.getState().loadOrCreatePlan(next);
+        }}
           className="flex items-center gap-1 px-3 py-2 bg-warm-100 border border-warm-300 rounded-lg hover:bg-warm-200 text-sm text-warm-700 font-medium transition-colors">
           本周
         </button>
         <button onClick={() => {
           const d = new Date(targetWeekStart);
           d.setDate(d.getDate() + 7);
-          setTargetWeekStart(getMonday(d));
+          const next = getMonday(d);
+          setTargetWeekStart(next);
+          useWeeklyPlanStore.getState().loadOrCreatePlan(next);
         }}
           className="flex items-center gap-1 px-3 py-2 bg-white border border-warm-200 rounded-lg hover:bg-warm-50 text-sm text-warm-700 transition-colors">
           下周 →
@@ -550,7 +555,7 @@ export default function WeeklyPlanPage() {
               if (currentPlan) {
                 import('../db').then(({ putItem }) => {
                   putItem('weeklyPlans', { ...currentPlan, weatherReminder: e.currentTarget.textContent || '' }).then(() => {
-                    loadOrCreatePlan(currentPlan.weekStart);
+                    useWeeklyPlanStore.getState().loadOrCreatePlan(currentPlan.weekStart);
                   });
                 });
               }
