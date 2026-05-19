@@ -524,9 +524,9 @@ export default function WeeklyPlanPage() {
                         )}
                       </div>
 
-                      {/* ===== 活动场所 — 蓝色突出 ===== */}
+                      {/* ===== 活动场所 — 有活动时蓝色突出 ===== */}
                       <div className="mb-1.5">
-                        {(cell?.venue || activityName) ? (
+                        {activityName ? (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -538,15 +538,15 @@ export default function WeeklyPlanPage() {
                               );
                             }}
                             className="w-full text-center text-xs print:text-sm leading-tight px-1 py-0.5 rounded flex items-center justify-center gap-1"
-                            style={{backgroundColor:'#eff6ff', borderLeft:'3px solid #3b82f6'}}
+                            style={{backgroundColor: cell?.venue ? '#eff6ff' : 'transparent', borderLeft: cell?.venue ? '3px solid #3b82f6' : 'none'}}
                           >
                             <MapPin className="w-2.5 h-2.5 print:w-3 print:h-3 shrink-0 text-blue-500" />
-                            <span className="truncate text-blue-700">{cell?.venue || '点击选择场所'}</span>
+                            <span className="truncate text-blue-700">{cell?.venue || '点击添加场所'}</span>
                           </button>
                         ) : null}
                       </div>
 
-                      {/* ===== 备注/提醒 — 绿色突出 ===== */}
+                      {/* ===== 备注/提醒 — 有活动时绿色突出 ===== */}
                       <div>
                         <textarea
                           value={cell?.note || ''}
@@ -559,8 +559,8 @@ export default function WeeklyPlanPage() {
                           }`}
                           style={{
                             minHeight: '24px',
-                            backgroundColor: outdoor ? '#fef2f2' : '#f0fdf4',
-                            borderLeft: outdoor ? '3px solid #ef4444' : '3px solid #22c55e',
+                            backgroundColor: activityName ? (outdoor ? '#fef2f2' : '#f0fdf4') : 'transparent',
+                            borderLeft: activityName ? (outdoor ? '3px solid #ef4444' : '3px solid #22c55e') : 'none',
                           }}
                         />
                       </div>
