@@ -19,6 +19,7 @@ export default function ActivityDetailModal({
 }: ActivityDetailModalProps) {
   const { updateActivity } = useActivityLibraryStore();
   const [editing, setEditing] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const safeAct = activity || { id:'', name:'', tags:[], images:[], description:'', venue:'', equipment:[], minStaff:1, safetyTips:'', buyLink:'' };
   const [form, setForm] = useState({ ...safeAct, equipment: safeAct.equipment.join('\n') });
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -34,6 +35,8 @@ export default function ActivityDetailModal({
     }
   }, [open, activity]);
 
+  const markDirty = (updater: any) => { setForm(updater); setDirty(true); };
+
   const handleSave = async () => {
     await updateActivity({
       ...form,
@@ -41,15 +44,24 @@ export default function ActivityDetailModal({
       buyLink: buyLinkVal,
     });
     setEditing(false);
+    setDirty(false);
+  };
+
+  const handleClose = () => {
+    if (dirty && editing) {
+      if (!confirm('有未保存的修改，确定关闭吗？')) return;
+    }
+    onClose();
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (form.images.length >= 5) { alert('最多上传5张图片，请先删除后再添加'); return; }
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (ev) => {
         if (ev.target?.result) {
-          setForm({ ...form, images: [...form.images, ev.target.result as string] });
+          (setForm({ ...form, images: [...form.images, ev.target.result as string] }), setDirty(true));
         }
       };
       reader.readAsDataURL(file);
@@ -58,6 +70,7 @@ export default function ActivityDetailModal({
   };
 
   const handlePaste = async () => {
+    if (form.images.length >= 5) { alert('最多上传5张图片，请先删除后再添加'); return; }
     try {
       const items = await navigator.clipboard.read();
       for (const item of items) {
@@ -67,7 +80,7 @@ export default function ActivityDetailModal({
             const reader = new FileReader();
             reader.onload = (ev) => {
               if (ev.target?.result) {
-                setForm({ ...form, images: [...form.images, ev.target.result as string] });
+                (setForm({ ...form, images: [...form.images, ev.target.result as string] }), setDirty(true));
               }
             };
             reader.readAsDataURL(blob);
@@ -81,7 +94,7 @@ export default function ActivityDetailModal({
   };
 
   const removeImage = (idx: number) => {
-    setForm({ ...form, images: form.images.filter((_, i) => i !== idx) });
+    (setForm({ ...form, images: form.images.filter((_, i) => i !== idx) }), setDirty(true));
   };
 
   if (!open) return null;
@@ -114,7 +127,7 @@ export default function ActivityDetailModal({
                 <Edit3 className="w-4 h-4" /> 编辑
               </button>
             )}
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-warm-50 text-warm-400 hover:text-warm-600 transition-colors">
+            <button onClick={handleClose} className="p-1.5 rounded-lg hover:bg-warm-50 text-warm-400 hover:text-warm-600 transition-colors">
               <X className="w-5 h-5" />
             </button>
           </div>

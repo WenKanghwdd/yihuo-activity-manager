@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Palette, X } from 'lucide-react';
 import { useActivityLibraryStore } from '../store/activityLibraryStore';
+import { useTagStore } from '../store/tagStore';
 import { ACTIVITY_TAGS, type ActivityTag, type Activity } from '../types';
 import ActivityCard from '../components/activityLibrary/ActivityCard';
 import ActivityDetailModal from '../components/activityLibrary/ActivityDetailModal';
@@ -8,109 +9,111 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import EmptyState from '../components/common/EmptyState';
 import Modal from '../components/common/Modal';
 
+const TAG_COLORS = [
+  '#dc2626', '#ea580c', '#d97706', '#16a34a', '#059669',
+  '#2563eb', '#7c3aed', '#db2777', '#e91e63', '#0891b2',
+];
+
 export default function ActivityLibraryPage() {
   const { activities, loading, loaded, loadActivities, searchQuery, setSearchQuery, selectedTags, toggleTag, addActivity } = useActivityLibraryStore();
+  const tagStore = useTagStore();
   const [showAdd, setShowAdd] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [showTagManager, setShowTagManager] = useState(false);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState('#e67414');
+  const [colorPickerTag, setColorPickerTag] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    venue: '',
-    equipment: '',
-    minStaff: 1,
-    safetyTips: '',
-    buyLink: '',
-    tags: [] as ActivityTag[],
-    images: [] as string[],
+    name: '', description: '', venue: '', equipment: '', minStaff: 1,
+    safetyTips: '', buyLink: '', tags: [] as ActivityTag[], images: [] as string[],
   });
 
   useEffect(() => {
     if (!loaded) loadActivities();
+    if (!tagStore.loaded) tagStore.loadTags();
   }, []);
 
+  // 统计每种标签的活动数
+  const tagCounts: Record<string, number> = {};
+  activities.forEach(a => a.tags.forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; }));
+
+  // 所有标签（预设 + 自定义）
+  const allTags = [...ACTIVITY_TAGS, ...tagStore.customTags.filter(t => !ACTIVITY_TAGS.includes(t as ActivityTag))];
+
   const filtered = activities.filter((a) => {
-    const matchSearch =
-      !searchQuery || a.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchTags =
-      selectedTags.length === 0 ||
-      selectedTags.some((tag) => a.tags.includes(tag));
+    const matchSearch = !searchQuery || a.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchTags = selectedTags.length === 0 || selectedTags.some((tag) => a.tags.includes(tag));
     return matchSearch && matchTags;
   });
 
   const handleAddActivity = async () => {
     if (!formData.name.trim()) return;
     await addActivity({
-      name: formData.name,
-      description: formData.description,
-      venue: formData.venue,
-      equipment: formData.equipment.split('\n').filter(Boolean),
-      minStaff: formData.minStaff,
-      safetyTips: formData.safetyTips,
-      buyLink: formData.buyLink || 'https://s.taobao.com/search?q=老人活动素材',
-      tags: formData.tags.length > 0 ? formData.tags : ['文娱欣赏'],
-      images: formData.images,
+      name: formData.name, description: formData.description, venue: formData.venue,
+      equipment: formData.equipment.split('\n').filter(Boolean), minStaff: formData.minStaff,
+      safetyTips: formData.safetyTips, buyLink: formData.buyLink || 'https://s.taobao.com/search?q=老人活动素材',
+      tags: formData.tags.length > 0 ? formData.tags : ['文娱欣赏'], images: formData.images,
     });
     setShowAdd(false);
-    setFormData({
-      name: '',
-      description: '',
-      venue: '',
-      equipment: '',
-      minStaff: 1,
-      safetyTips: '',
-      buyLink: '',
-      tags: [],
-      images: [],
-    });
+    setFormData({ name: '', description: '', venue: '', equipment: '', minStaff: 1, safetyTips: '', buyLink: '', tags: [], images: [] });
+  };
+
+  const handleAddTag = async () => {
+    if (!newTagName.trim()) return;
+    if (allTags.includes(newTagName.trim() as ActivityTag)) { alert('该标签已存在'); return; }
+    await tagStore.addCustomTag(newTagName.trim(), newTagColor);
+    setNewTagName('');
   };
 
   if (loading) return <LoadingSpinner message="加载活动库..." />;
 
   return (
     <div className="space-y-4">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-800">活动库</h2>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 text-white text-sm rounded-lg hover:bg-orange-600 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          新增活动
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => { tagStore.loadTags(); setShowTagManager(true); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-warm-200 text-sm rounded-lg hover:bg-warm-50 transition-colors">
+            <Palette className="w-4 h-4" /> 标签管理
+          </button>
+          <button onClick={() => setShowAdd(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 text-white text-sm rounded-lg hover:bg-orange-600 transition-colors">
+            <Plus className="w-4 h-4" /> 新增活动
+          </button>
+        </div>
       </div>
 
       {/* Search */}
       <div className="relative">
         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          type="text"
-          placeholder="搜索活动名称..."
-          value={searchQuery}
+        <input type="text" placeholder="搜索活动名称..." value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-warm-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-        />
+          className="w-full pl-10 pr-4 py-2 border border-warm-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
       </div>
 
-      {/* Tags */}
+      {/* Tags with counts */}
       <div className="flex flex-wrap gap-2">
-        {ACTIVITY_TAGS.map((tag) => (
-          <button
-            key={tag}
-            onClick={() => toggleTag(tag)}
-            className={`px-3 py-1 text-sm rounded-full transition-colors ${
-              selectedTags.includes(tag)
-                ? 'bg-orange-500 text-white'
-                : 'bg-white text-gray-600 border border-warm-200 hover:border-orange-300'
-            }`}
-          >
-            {tag}
-          </button>
-        ))}
+        {allTags.map((tag) => {
+          const cfg = tagStore.getTagConfig(tag);
+          const count = tagCounts[tag] || 0;
+          const active = selectedTags.includes(tag as ActivityTag);
+          return (
+            <button key={tag} onClick={() => toggleTag(tag as ActivityTag)}
+              className="px-3 py-1 text-sm rounded-full transition-colors flex items-center gap-1.5"
+              style={{
+                backgroundColor: active ? cfg.color : cfg.bgColor,
+                color: active ? '#fff' : cfg.color,
+                border: active ? 'none' : `1px solid ${cfg.color}40`,
+              }}>
+              {tag}
+              <span className="text-[10px] opacity-70">({count})</span>
+            </button>
+          );
+        })}
         {selectedTags.length > 0 && (
-          <button
-            onClick={() => selectedTags.forEach((t) => toggleTag(t))}
-            className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-full transition-colors"
-          >
+          <button onClick={() => selectedTags.forEach((t) => toggleTag(t))}
+            className="px-3 py-1 text-sm text-red-500 hover:bg-red-50 rounded-full transition-colors">
             清除筛选
           </button>
         )}
@@ -118,106 +121,77 @@ export default function ActivityLibraryPage() {
 
       {/* Grid */}
       {filtered.length === 0 ? (
-        <EmptyState
-          title="暂无活动"
-          description={searchQuery || selectedTags.length > 0 ? '换个搜索条件试试' : '点击"新增活动"添加第一个活动'}
-        />
+        <EmptyState title="暂无活动"
+          description={searchQuery || selectedTags.length > 0 ? '换个搜索条件试试' : '点击"新增活动"添加第一个活动'} />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((activity) => (
-            <ActivityCard key={activity.id} activity={activity}
-              onClick={() => setSelectedActivity(activity)} />
+            <ActivityCard key={activity.id} activity={activity} onClick={() => setSelectedActivity(activity)} />
           ))}
         </div>
       )}
 
-      {/* Add modal */}
+      {/* Add modal (unchanged) */}
       <Modal open={showAdd} onClose={() => setShowAdd(false)} title="新增活动" width="max-w-xl">
         <div className="space-y-3">
           <div>
             <label className="block text-sm text-gray-600 mb-1">活动名称 *</label>
-            <input
-              type="text" value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-warm-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-            />
+            <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-3 py-2 border border-warm-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
           </div>
           <div>
             <label className="block text-sm text-gray-600 mb-1">描述</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={2}
-              className="w-full px-3 py-2 border border-warm-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none"
-            />
+            <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={2} className="w-full px-3 py-2 border border-warm-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none" />
           </div>
           <div>
             <label className="block text-sm text-gray-600 mb-1">标签</label>
             <div className="flex flex-wrap gap-1.5">
-              {ACTIVITY_TAGS.map((tag) => (
-                <button
-                  key={tag}
-                  onClick={() => setFormData({
-                    ...formData,
-                    tags: formData.tags.includes(tag)
-                      ? formData.tags.filter((t) => t !== tag)
-                      : [...formData.tags, tag],
+              {allTags.map((tag) => {
+                const cfg = tagStore.getTagConfig(tag);
+                return (
+                  <button key={tag} onClick={() => setFormData({
+                    ...formData, tags: formData.tags.includes(tag as ActivityTag)
+                      ? formData.tags.filter((t) => t !== tag) : [...formData.tags, tag as ActivityTag],
                   })}
-                  className={`px-2 py-0.5 text-xs rounded-full ${
-                    formData.tags.includes(tag)
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-gray-100 text-gray-600'
-                  }`}
-                >
-                  {tag}
-                </button>
-              ))}
+                    className="px-2 py-0.5 text-xs rounded-full"
+                    style={{
+                      backgroundColor: formData.tags.includes(tag as ActivityTag) ? cfg.color : cfg.bgColor,
+                      color: formData.tags.includes(tag as ActivityTag) ? '#fff' : cfg.color,
+                    }}>
+                    {tag}
+                  </button>
+                );
+              })}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm text-gray-600 mb-1">场地</label>
-              <input
-                type="text" value={formData.venue}
-                onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
-                className="w-full px-3 py-2 border border-warm-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-              />
+              <input type="text" value={formData.venue} onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
+                className="w-full px-3 py-2 border border-warm-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
             </div>
             <div>
               <label className="block text-sm text-gray-600 mb-1">最少组织人数</label>
-              <input
-                type="number" min={1} value={formData.minStaff}
+              <input type="number" min={1} value={formData.minStaff}
                 onChange={(e) => setFormData({ ...formData, minStaff: parseInt(e.target.value) || 1 })}
-                className="w-full px-3 py-2 border border-warm-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-              />
+                className="w-full px-3 py-2 border border-warm-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
             </div>
           </div>
           <div>
             <label className="block text-sm text-gray-600 mb-1">器具列表（每行一个）</label>
-            <textarea
-              value={formData.equipment}
-              onChange={(e) => setFormData({ ...formData, equipment: e.target.value })}
-              rows={2}
-              className="w-full px-3 py-2 border border-warm-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none"
-            />
+            <textarea value={formData.equipment} onChange={(e) => setFormData({ ...formData, equipment: e.target.value })}
+              rows={2} className="w-full px-3 py-2 border border-warm-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none" />
           </div>
           <div>
             <label className="block text-sm text-gray-600 mb-1">安全提示</label>
-            <textarea
-              value={formData.safetyTips}
-              onChange={(e) => setFormData({ ...formData, safetyTips: e.target.value })}
-              rows={2}
-              className="w-full px-3 py-2 border border-warm-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none"
-            />
+            <textarea value={formData.safetyTips} onChange={(e) => setFormData({ ...formData, safetyTips: e.target.value })}
+              rows={2} className="w-full px-3 py-2 border border-warm-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none" />
           </div>
           <div>
             <label className="block text-sm text-gray-600 mb-1">购买链接</label>
-            <input
-              type="text" value={formData.buyLink}
-              onChange={(e) => setFormData({ ...formData, buyLink: e.target.value })}
-              placeholder="https://s.taobao.com/search?q=..."
-              className="w-full px-3 py-2 border border-warm-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-            />
+            <input type="text" value={formData.buyLink} onChange={(e) => setFormData({ ...formData, buyLink: e.target.value })}
+              placeholder="https://s.taobao.com/search?q=..." className="w-full px-3 py-2 border border-warm-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button onClick={() => setShowAdd(false)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">取消</button>
@@ -226,12 +200,76 @@ export default function ActivityLibraryPage() {
         </div>
       </Modal>
 
-      {/* 活动详情弹窗 */}
-      <ActivityDetailModal
-        activity={selectedActivity!}
-        open={!!selectedActivity}
-        onClose={() => setSelectedActivity(null)}
-      />
+      {/* Tag Manager Modal */}
+      <Modal open={showTagManager} onClose={() => setShowTagManager(false)} title="标签管理" width="max-w-md">
+        <div className="space-y-4">
+          {/* 新增标签 */}
+          <div className="flex items-center gap-2">
+            <input type="text" value={newTagName} onChange={(e) => setNewTagName(e.target.value)}
+              placeholder="新标签名称..." className="flex-1 px-3 py-2 border border-warm-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-orange-400" />
+            <div className="flex gap-1">
+              {TAG_COLORS.map(c => (
+                <button key={c} onClick={() => setNewTagColor(c)}
+                  className="w-6 h-6 rounded-full border-2 transition-all"
+                  style={{
+                    backgroundColor: c,
+                    borderColor: newTagColor === c ? '#333' : 'transparent',
+                    transform: newTagColor === c ? 'scale(1.2)' : 'scale(1)',
+                  }} />
+              ))}
+            </div>
+            <button onClick={handleAddTag} disabled={!newTagName.trim()}
+              className="px-3 py-2 bg-orange-500 text-white rounded-lg text-sm hover:bg-orange-600 disabled:opacity-50">添加</button>
+          </div>
+
+          {/* 标签列表 */}
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {allTags.map((tag) => {
+              const cfg = tagStore.getTagConfig(tag);
+              const isCustom = tagStore.customTags.includes(tag);
+              return (
+                <div key={tag} className="flex items-center justify-between p-2 rounded-lg bg-warm-50">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded" style={{ backgroundColor: cfg.color }} />
+                    <span className="text-sm text-gray-700">{tag}</span>
+                    {isCustom && <span className="text-[10px] text-warm-400">(自定义)</span>}
+                    <span className="text-[10px] text-warm-400">({tagCounts[tag] || 0}个活动)</span>
+                  </div>
+                  <div className="flex gap-1">
+                    <div className="relative">
+                      <button onClick={() => setColorPickerTag(colorPickerTag === tag ? null : tag)}
+                        className="px-2 py-1 text-[10px] border border-warm-200 rounded hover:bg-warm-100">改色</button>
+                      {colorPickerTag === tag && (
+                        <div className="absolute right-0 top-full mt-1 z-10 bg-white border border-warm-200 rounded-lg shadow-lg p-2 flex gap-1"
+                          onMouseLeave={() => setColorPickerTag(null)}>
+                          {TAG_COLORS.map(c => (
+                            <button key={c} onClick={async () => {
+                              await tagStore.updateTagColor(tag, c, c + '20');
+                              setColorPickerTag(null);
+                            }}
+                              className="w-5 h-5 rounded-full border border-gray-200 hover:scale-110 transition-transform"
+                              style={{ backgroundColor: c }} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {isCustom && (
+                      <button onClick={() => tagStore.removeCustomTag(tag)}
+                        className="px-2 py-1 text-[10px] text-red-500 hover:bg-red-50 rounded">
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Detail Modal */}
+      <ActivityDetailModal activity={selectedActivity!} open={!!selectedActivity}
+        onClose={() => setSelectedActivity(null)} />
     </div>
   );
 }
