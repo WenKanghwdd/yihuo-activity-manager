@@ -72,6 +72,8 @@ export const useWeeklyPlanStore = create<WeeklyPlanState>((set, get) => ({
       customText: existingCell?.customText ?? '',
       imageBase64: existingCell?.imageBase64 ?? null,
       imageHeight: existingCell?.imageHeight ?? 80,
+      imageOffsetX: existingCell?.imageOffsetX ?? 50,
+      imageOffsetY: existingCell?.imageOffsetY ?? 50,
       note: existingCell?.note ?? '',
       venue: existingCell?.venue ?? '',
       ...(updates as unknown as Partial<WeeklyPlanCell>),

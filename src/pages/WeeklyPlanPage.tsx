@@ -24,6 +24,8 @@ export default function WeeklyPlanPage() {
   const printRef = useRef<HTMLDivElement>(null);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [pickSlot, setPickSlot] = useState<{ slotId: string; weekday: number } | null>(null);
+  const [cropSlot, setCropSlot] = useState<{ slotId: string; weekday: number } | null>(null);
+  const [cropPos, setCropPos] = useState({ x: 50, y: 50 });
   const [searchQuery, setSearchQuery] = useState('');
   const [detailActivity, setDetailActivity] = useState<Activity | null>(null);
   const [targetWeekStart, setTargetWeekStart] = useState(getMonday(new Date()));
@@ -487,8 +489,19 @@ export default function WeeklyPlanPage() {
                           <div className="relative group">
                             <img src={cell.imageBase64} alt="活动图片"
                               className="w-full object-cover rounded border"
-                              style={{ height: `${cell.imageHeight || 80}px`, borderColor: theme.border }} />
+                              style={{
+                                height: `${cell.imageHeight || 80}px`,
+                                borderColor: theme.border,
+                                objectPosition: `${cell.imageOffsetX ?? 50}% ${cell.imageOffsetY ?? 50}%`,
+                              }} />
                             <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 group-hover:bg-black/30 transition-colors print:hidden">
+                              <button onClick={(e) => { e.stopPropagation();
+                                setCropPos({ x: cell.imageOffsetX ?? 50, y: cell.imageOffsetY ?? 50 });
+                                setCropSlot({ slotId, weekday: day });
+                              }}
+                                className="opacity-0 group-hover:opacity-100 px-2 py-0.5 bg-green-500/90 text-white text-[10px] rounded">
+                                裁剪
+                              </button>
                               <button onClick={(e) => { e.stopPropagation();
                                 const input = document.createElement('input');
                                 input.type = 'file'; input.accept = 'image/*';
@@ -865,6 +878,85 @@ export default function WeeklyPlanPage() {
           </div>
         </div>
       )}
+
+      {/* ===== 图片裁剪弹窗 ===== */}
+      {cropSlot && cellHasActivity(getCell(cropSlot.slotId, cropSlot.weekday)) && (() => {
+        const cell = getCell(cropSlot.slotId, cropSlot.weekday);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            onClick={() => setCropSlot(null)}>
+            <div className="bg-white rounded-xl shadow-xl p-5 w-full max-w-lg mx-4"
+              onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-sm font-semibold text-warm-800 mb-3">调整图片显示区域</h3>
+
+              {/* 预览区 */}
+              <div className="relative w-full h-48 overflow-hidden rounded-lg border border-warm-200 mb-3 bg-gray-100">
+                {cell?.imageBase64 && (
+                  <img src={cell.imageBase64} alt=""
+                    className="w-full h-full object-cover"
+                    style={{
+                      objectPosition: `${cropPos.x}% ${cropPos.y}%`,
+                      transition: 'object-position 0.05s',
+                    }}
+                    draggable
+                    onDragStart={(e) => {
+                      const startX = cropPos.x;
+                      const startY = cropPos.y;
+                      const startMX = e.clientX;
+                      const startMY = e.clientY;
+                      const onMove = (ev: DragEvent) => {
+                        if (!ev.clientX) return;
+                        const dx = (ev.clientX - startMX) / 2;
+                        const dy = (ev.clientY - startMY) / 2;
+                        setCropPos({
+                          x: Math.max(0, Math.min(100, startX + dx)),
+                          y: Math.max(0, Math.min(100, startY + dy)),
+                        });
+                      };
+                      const onEnd = () => {
+                        document.removeEventListener('drag', onMove);
+                        document.removeEventListener('dragend', onEnd);
+                      };
+                      document.addEventListener('drag', onMove);
+                      document.addEventListener('dragend', onEnd);
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* 拖拽提示 */}
+              <p className="text-[10px] text-warm-400 text-center mb-3">← 拖拽图片调整显示区域 →</p>
+
+              {/* 方向按钮 */}
+              <div className="flex justify-center gap-2 mb-3">
+                <button onClick={() => setCropPos(p => ({ x: Math.max(0, p.x - 5), y: p.y }))}
+                  className="px-3 py-1 border border-warm-200 rounded text-xs hover:bg-warm-50">←</button>
+                <button onClick={() => setCropPos(p => ({ x: p.x, y: Math.max(0, p.y - 5) }))}
+                  className="px-3 py-1 border border-warm-200 rounded text-xs hover:bg-warm-50">↑</button>
+                <button onClick={() => setCropPos(p => ({ x: p.x, y: Math.min(100, p.y + 5) }))}
+                  className="px-3 py-1 border border-warm-200 rounded text-xs hover:bg-warm-50">↓</button>
+                <button onClick={() => setCropPos(p => ({ x: Math.min(100, p.x + 5), y: p.y }))}
+                  className="px-3 py-1 border border-warm-200 rounded text-xs hover:bg-warm-50">→</button>
+                <button onClick={() => setCropPos({ x: 50, y: 50 })}
+                  className="px-3 py-1 border border-warm-200 rounded text-xs hover:bg-warm-50">居中</button>
+              </div>
+
+              <div className="flex gap-2 justify-end">
+                <button onClick={() => setCropSlot(null)}
+                  className="px-4 py-2 border border-warm-200 rounded-lg text-sm text-warm-600 hover:bg-warm-50">取消</button>
+                <button onClick={() => {
+                  updateCell(cropSlot.slotId, cropSlot.weekday as Weekday, {
+                    imageOffsetX: cropPos.x,
+                    imageOffsetY: cropPos.y,
+                  });
+                  setCropSlot(null);
+                }}
+                  className="px-4 py-2 bg-warm-500 text-white rounded-lg text-sm hover:bg-warm-600">确认</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
