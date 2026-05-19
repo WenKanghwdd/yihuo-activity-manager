@@ -3,13 +3,15 @@ import type { Activity } from '../../types';
 
 interface ActivityCardProps {
   activity: Activity;
+  onClick?: () => void;
   onSelect?: () => void;
   showSelect?: boolean;
 }
 
-export default function ActivityCard({ activity, onSelect, showSelect }: ActivityCardProps) {
+export default function ActivityCard({ activity, onClick, onSelect, showSelect }: ActivityCardProps) {
   return (
-    <div className="bg-white rounded-xl border border-warm-200 overflow-hidden hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-xl border border-warm-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+      onClick={onClick}>
       {/* Image */}
       <div className="h-36 bg-warm-50 overflow-hidden">
         {activity.images[0] ? (

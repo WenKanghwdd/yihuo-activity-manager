@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Search, Plus } from 'lucide-react';
 import { useActivityLibraryStore } from '../store/activityLibraryStore';
-import { ACTIVITY_TAGS, type ActivityTag } from '../types';
+import { ACTIVITY_TAGS, type ActivityTag, type Activity } from '../types';
 import ActivityCard from '../components/activityLibrary/ActivityCard';
+import ActivityDetailModal from '../components/activityLibrary/ActivityDetailModal';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import EmptyState from '../components/common/EmptyState';
 import Modal from '../components/common/Modal';
@@ -10,6 +11,7 @@ import Modal from '../components/common/Modal';
 export default function ActivityLibraryPage() {
   const { activities, loading, loaded, loadActivities, searchQuery, setSearchQuery, selectedTags, toggleTag, addActivity } = useActivityLibraryStore();
   const [showAdd, setShowAdd] = useState(false);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -123,7 +125,8 @@ export default function ActivityLibraryPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((activity) => (
-            <ActivityCard key={activity.id} activity={activity} />
+            <ActivityCard key={activity.id} activity={activity}
+              onClick={() => setSelectedActivity(activity)} />
           ))}
         </div>
       )}
@@ -222,6 +225,13 @@ export default function ActivityLibraryPage() {
           </div>
         </div>
       </Modal>
+
+      {/* 活动详情弹窗 */}
+      <ActivityDetailModal
+        activity={selectedActivity!}
+        open={!!selectedActivity}
+        onClose={() => setSelectedActivity(null)}
+      />
     </div>
   );
 }
