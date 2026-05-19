@@ -6,7 +6,7 @@ import { useActivityLibraryStore } from '../store/activityLibraryStore';
 import { useVenueStore } from '../store/venueStore';
 import { THEME_CONFIGS, WEEKDAY_NAMES } from '../types';
 import type { ThemeType, WeeklyPlanCell, Activity, Weekday, SlotId } from '../types';
-import { hasOutdoorKeyword, getWeekInfo } from '../utils/helpers';
+import { hasOutdoorKeyword, getWeekInfo, getMonday } from '../utils/helpers';
 import { useReactToPrint } from 'react-to-print';
 import ActivityDetailModal from '../components/activityLibrary/ActivityDetailModal';
 import { PRESET_IMAGES } from '../utils/presetImages';
@@ -26,6 +26,7 @@ export default function WeeklyPlanPage() {
   const [pickSlot, setPickSlot] = useState<{ slotId: string; weekday: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [detailActivity, setDetailActivity] = useState<Activity | null>(null);
+  const [targetWeekStart, setTargetWeekStart] = useState(getMonday(new Date()));
   const [showAllTimeEdit, setShowAllTimeEdit] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showImageGallery, setShowImageGallery] = useState<{ slotId: string; weekday: number } | null>(null);
@@ -89,8 +90,8 @@ export default function WeeklyPlanPage() {
   useEffect(() => {
     if (!libLoaded) loadActivities();
     if (!venueStore.loaded) venueStore.loadAll();
-    loadOrCreatePlan();
-  }, [loadOrCreatePlan, loadActivities, libLoaded, venueStore]);
+    loadOrCreatePlan(targetWeekStart);
+  }, [loadOrCreatePlan, loadActivities, libLoaded, venueStore, targetWeekStart]);
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
@@ -190,6 +191,29 @@ export default function WeeklyPlanPage() {
           className="flex items-center gap-1.5 px-3 py-2 bg-white border border-warm-200 rounded-lg hover:bg-warm-50 text-sm text-warm-700 transition-colors">
           <Palette className="w-4 h-4" /> 风格模板
         </button>
+        {/* 周导航 */}
+        <button onClick={() => {
+          const d = new Date(targetWeekStart);
+          d.setDate(d.getDate() - 7);
+          setTargetWeekStart(getMonday(d));
+        }}
+          className="flex items-center gap-1 px-3 py-2 bg-white border border-warm-200 rounded-lg hover:bg-warm-50 text-sm text-warm-700 transition-colors">
+          ← 上周
+        </button>
+        <button onClick={() => setTargetWeekStart(getMonday(new Date()))}
+          className="flex items-center gap-1 px-3 py-2 bg-warm-100 border border-warm-300 rounded-lg hover:bg-warm-200 text-sm text-warm-700 font-medium transition-colors">
+          本周
+        </button>
+        <button onClick={() => {
+          const d = new Date(targetWeekStart);
+          d.setDate(d.getDate() + 7);
+          setTargetWeekStart(getMonday(d));
+        }}
+          className="flex items-center gap-1 px-3 py-2 bg-white border border-warm-200 rounded-lg hover:bg-warm-50 text-sm text-warm-700 transition-colors">
+          下周 →
+        </button>
+        <div className="w-px h-6 bg-warm-200" />
+
         <button onClick={() => { syncUniTime(); setShowAllTimeEdit(true); }}
           className="flex items-center gap-1.5 px-3 py-2 bg-white border border-warm-200 rounded-lg hover:bg-warm-50 text-sm text-warm-700 transition-colors">
           <Clock className="w-4 h-4" /> 统一设置时间
@@ -217,6 +241,23 @@ export default function WeeklyPlanPage() {
         }}
           className="flex items-center gap-1.5 px-3 py-2 bg-white border border-warm-200 rounded-lg hover:bg-warm-50 text-sm text-warm-700 transition-colors">
           自动提醒
+        </button>
+        <button onClick={async () => {
+          if (!currentPlan) return;
+          const nextMonday = new Date(targetWeekStart);
+          nextMonday.setDate(nextMonday.getDate() + 7);
+          const nextStart = getMonday(nextMonday);
+          const { putItem } = await import('../db');
+          const nextPlan = {
+            ...currentPlan,
+            id: Date.now().toString(36) + Math.random().toString(36).substr(2, 9),
+            weekStart: nextStart,
+          };
+          await putItem('weeklyPlans', nextPlan);
+          setTargetWeekStart(nextStart);
+        }}
+          className="flex items-center gap-1.5 px-3 py-2 bg-white border border-warm-200 rounded-lg hover:bg-warm-50 text-sm text-warm-700 transition-colors">
+          复制到下周
         </button>
         <button onClick={() => setShowResetConfirm(true)}
           className="flex items-center gap-1.5 px-3 py-2 bg-white border border-red-200 text-red-500 rounded-lg hover:bg-red-50 text-sm transition-colors">
