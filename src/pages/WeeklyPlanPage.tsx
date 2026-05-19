@@ -504,54 +504,66 @@ export default function WeeklyPlanPage() {
                         </button>
                       )}
 
-                      {/* ===== 活动名称（打印加粗放大） ===== */}
-                      {activityName ? (
-                        <div
-                          className="text-[17px] print:text-lg font-black leading-tight mb-0.5 text-center"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (act) setDetailActivity(act);
-                          }}
-                        >
-                          {activityName}
-                        </div>
-                      ) : (
-                        <div className="text-[10px] text-warm-300 italic leading-tight no-print">
-                          点击选择活动
-                        </div>
-                      )}
+                      {/* ===== 活动名称 — 橙色突出 ===== */}
+                      <div className="mb-1.5">
+                        {activityName ? (
+                          <div
+                            className="text-[17px] print:text-lg font-black leading-tight text-center px-1 py-0.5 rounded"
+                            style={{backgroundColor:theme.accent+'15', borderLeft:'3px solid '+theme.accent}}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (act) setDetailActivity(act);
+                            }}
+                          >
+                            {activityName}
+                          </div>
+                        ) : (
+                          <div className="text-[10px] text-warm-300 italic leading-tight no-print text-center">
+                            点击选择活动
+                          </div>
+                        )}
+                      </div>
 
-                      {/* ===== 活动场所（打印加粗） ===== */}
-                      {(cell?.venue || activityName) && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setVenueEditValue(cell?.venue || '');
-                            venueStore.openVenueEditor(
-                              `${WEEKDAY_NAMES[day as Weekday]} ${SLOT_LABELS[slotId as SlotId]}`,
-                              cell?.venue || '',
-                              (v) => updateCell(slotId, day as Weekday, { venue: v })
-                            );
-                          }}
-                          className="w-full text-center text-xs print:text-sm text-warm-500  hover:text-warm-700 leading-tight flex items-center justify-center gap-0.5 print:no-underline"
-                        >
-                          <MapPin className="w-2.5 h-2.5 print:w-3 print:h-3 shrink-0" />
-                          <span className="truncate">{cell?.venue || '点击选择场所'}</span>
-                        </button>
-                      )}
+                      {/* ===== 活动场所 — 蓝色突出 ===== */}
+                      <div className="mb-1.5">
+                        {(cell?.venue || activityName) ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setVenueEditValue(cell?.venue || '');
+                              venueStore.openVenueEditor(
+                                `${WEEKDAY_NAMES[day as Weekday]} ${SLOT_LABELS[slotId as SlotId]}`,
+                                cell?.venue || '',
+                                (v) => updateCell(slotId, day as Weekday, { venue: v })
+                              );
+                            }}
+                            className="w-full text-center text-xs print:text-sm leading-tight px-1 py-0.5 rounded flex items-center justify-center gap-1"
+                            style={{backgroundColor:'#eff6ff', borderLeft:'3px solid #3b82f6'}}
+                          >
+                            <MapPin className="w-2.5 h-2.5 print:w-3 print:h-3 shrink-0 text-blue-500" />
+                            <span className="truncate text-blue-700">{cell?.venue || '点击选择场所'}</span>
+                          </button>
+                        ) : null}
+                      </div>
 
-                      {/* 备注 — 可编辑，自动换行 */}
-                      <textarea
-                        value={cell?.note || ''}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => updateCell(slotId, day as Weekday, { note: e.target.value })}
-                        placeholder="提醒..."
-                        rows={3}
-                        className={`w-full text-center text-xs print:text-sm bg-transparent border-0 border-b border-dashed border-warm-200 outline-none p-0 mt-0.5 leading-tight resize-vertical focus:border-warm-400 print:border-0 ${
-                          outdoor ? 'text-red-600 font-semibold' : 'text-warm-500 '
-                        }`}
-                        style={{ minHeight: '24px', overflow: 'hidden' }}
-                      />
+                      {/* ===== 备注/提醒 — 绿色突出 ===== */}
+                      <div>
+                        <textarea
+                          value={cell?.note || ''}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => updateCell(slotId, day as Weekday, { note: e.target.value })}
+                          placeholder="提醒..."
+                          rows={3}
+                          className={`w-full text-center text-xs print:text-sm leading-tight px-1 py-0.5 rounded resize-vertical outline-none ${
+                            outdoor ? 'text-red-600 font-semibold' : 'text-warm-500'
+                          }`}
+                          style={{
+                            minHeight: '24px',
+                            backgroundColor: outdoor ? '#fef2f2' : '#f0fdf4',
+                            borderLeft: outdoor ? '3px solid #ef4444' : '3px solid #22c55e',
+                          }}
+                        />
+                      </div>
                     </td>
                   );
                 })}
