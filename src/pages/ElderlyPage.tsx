@@ -399,11 +399,12 @@ export default function ElderlyPage() {
           </div>
           <button
             onClick={() => {
+              const getName = (slotId: string) => getActivityForSlot(batchDate, slotId) || '活动';
               if (batchSlotMode === 'both') {
-                batchSetStatus(selectedIds, batchDate, 'morning', '批量标记', 'participated');
-                batchSetStatus(selectedIds, batchDate, 'afternoon', '批量标记', 'participated');
+                batchSetStatus(selectedIds, batchDate, 'morning', getName('morning'), 'participated');
+                batchSetStatus(selectedIds, batchDate, 'afternoon', getName('afternoon'), 'participated');
               } else {
-                batchSetStatus(selectedIds, batchDate, batchSlotMode, '批量标记', 'participated');
+                batchSetStatus(selectedIds, batchDate, batchSlotMode, getName(batchSlotMode), 'participated');
               }
             }}
             className="px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs hover:bg-green-600 transition-colors"
@@ -412,11 +413,12 @@ export default function ElderlyPage() {
           </button>
           <button
             onClick={() => {
+              const getName = (slotId: string) => getActivityForSlot(batchDate, slotId) || '活动';
               if (batchSlotMode === 'both') {
-                batchSetStatus(selectedIds, batchDate, 'morning', '批量标记', 'not_participated');
-                batchSetStatus(selectedIds, batchDate, 'afternoon', '批量标记', 'not_participated');
+                batchSetStatus(selectedIds, batchDate, 'morning', getName('morning'), 'not_participated');
+                batchSetStatus(selectedIds, batchDate, 'afternoon', getName('afternoon'), 'not_participated');
               } else {
-                batchSetStatus(selectedIds, batchDate, batchSlotMode, '批量标记', 'not_participated');
+                batchSetStatus(selectedIds, batchDate, batchSlotMode, getName(batchSlotMode), 'not_participated');
               }
             }}
             className="px-3 py-1.5 bg-red-400 text-white rounded-lg text-xs hover:bg-red-500 transition-colors"
@@ -559,7 +561,8 @@ export default function ElderlyPage() {
                             </td>
                             {DEFAULT_TIME_SLOTS.map((slot) => {
                               const record = records.find((r) => r.timeSlotId === slot.id);
-                              const activityName = record?.activityName || getActivityForSlot(date, slot.id);
+                              const planName = getActivityForSlot(date, slot.id);
+                              const activityName = planName || record?.activityName || '';
                               return (
                                 <td
                                   key={slot.id}
@@ -630,7 +633,8 @@ export default function ElderlyPage() {
                         r.date === today &&
                         r.timeSlotId === slot.id
                     );
-                    const activityName = getActivityForSlot(today, slot.id);
+                    const dailyPlanName = getActivityForSlot(today, slot.id);
+                    const dailyActivityName = dailyPlanName || record?.activityName || '';
                     return (
                       <div
                         key={slot.id}
@@ -638,12 +642,12 @@ export default function ElderlyPage() {
                       >
                         <span className="text-xs text-warm-600 w-28 shrink-0">{slot.label}</span>
                         <span className="text-xs text-warm-700 flex-1">
-                          {activityName || '暂未安排活动'}
+                          {dailyActivityName || '暂未安排活动'}
                         </span>
                         <div className="flex gap-1">
                           <button
                             onClick={() =>
-                              setStatus(selectedElderly.id, today, slot.id, activityName, 'participated')
+                              setStatus(selectedElderly.id, today, slot.id, dailyActivityName, 'participated')
                             }
                             className={`px-2 py-1 rounded text-[10px] ${
                               record?.status === 'participated'
@@ -655,7 +659,7 @@ export default function ElderlyPage() {
                           </button>
                           <button
                             onClick={() =>
-                              setStatus(selectedElderly.id, today, slot.id, activityName, 'not_participated')
+                              setStatus(selectedElderly.id, today, slot.id, dailyActivityName, 'not_participated')
                             }
                             className={`px-2 py-1 rounded text-[10px] ${
                               record?.status === 'not_participated'
