@@ -33,10 +33,10 @@ export default function Layout() {
         {/* Logo area */}
         <div className="flex items-center gap-2 px-5 py-5">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-400/30 text-amber-200 text-xl font-bold">
-            颐
+            悦
           </div>
           <div>
-            <h1 className="text-lg font-bold leading-tight text-amber-100">颐活</h1>
+            <h1 className="text-lg font-bold leading-tight text-amber-100">悦活</h1>
             <p className="text-xs text-amber-300/70">活动管理平台</p>
           </div>
         </div>
@@ -65,7 +65,7 @@ export default function Layout() {
 
         {/* Footer */}
         <div className="border-t border-amber-800/30 px-5 py-3 text-xs text-amber-300/50">
-          颐活 v1.0 · 本地数据
+          悦活 v1.0 · 本地数据
         </div>
       </aside>
 
@@ -80,7 +80,7 @@ export default function Layout() {
           >
             {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
-          <span className="text-lg font-bold text-warm-700">颐活</span>
+          <span className="text-lg font-bold text-warm-700">悦活</span>
         </header>
 
         {/* Page content */}

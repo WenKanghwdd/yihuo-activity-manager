@@ -1,6 +1,6 @@
 import { openDB, type IDBPDatabase } from 'idb';
 
-const DB_NAME = 'yihuo-activity-manager';
+const DB_NAME = 'yuehuo-activity-manager';
 const DB_VERSION = 1;
 
 let dbInstance: IDBPDatabase | null = null;

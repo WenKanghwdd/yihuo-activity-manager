@@ -1,4 +1,4 @@
-# 🏠 颐活 - 养老院活动管理系统
+# 🏠 悦活 - 养老院活动管理系统
 
 基于 React + TypeScript 构建的养老院活动管理 Web 应用，所有数据仅存储在本地浏览器中。
 
@@ -58,7 +58,7 @@ npm run preview
 ## 目录结构
 
 ```
-yihuo-activity-manager/
+yuehuo-activity-manager/
 ├── src/
 │   ├── components/           # 组件
 │   │   ├── layout/           # 布局组件

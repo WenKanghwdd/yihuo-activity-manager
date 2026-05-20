@@ -40,7 +40,7 @@ export default function SettingsPage() {
       活动名称: r.activityName,
       参与状态: r.status === 'participated' ? '已参加' : r.status === 'not_participated' ? '未参加' : '未标记',
     }));
-    exportToExcel(data, `颐活活动记录备份_${new Date().toISOString().split('T')[0]}`);
+    exportToExcel(data, `悦活活动记录备份_${new Date().toISOString().split('T')[0]}`);
     setMessage('导出成功！');
     setTimeout(() => setMessage(''), 3000);
   };
@@ -150,7 +150,7 @@ export default function SettingsPage() {
       <div className="bg-white rounded-xl border border-warm-100 p-5">
         <h2 className="font-bold text-warm-800 mb-2">关于</h2>
         <p className="text-sm text-warm-500">
-          颐活 - 养老院活动管理系统 v1.0
+          悦活 - 养老院活动管理系统 v1.0
         </p>
         <p className="text-xs text-warm-400 mt-1">
           数据全部存储在本地浏览器中，不上传任何服务器。
