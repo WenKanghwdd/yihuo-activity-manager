@@ -3,12 +3,12 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "main": "electron/main.js",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "dev:electron": "concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .\"",
     "build": "tsc -b && vite build",
-    "build:electron": "npm run build && electron-builder --win --mac --linux",
+    "build:electron": "tsc -b && vite build --base=./",
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "npm run build && electron-builder --mac",
     "lint": "eslint .",
@@ -50,7 +50,7 @@
   },
   "build": {
     "appId": "com.yuehuo.activity-manager",
-    "productName": "悦活",
+    "productName": "\u60a6\u6d3b",
     "directories": {
       "output": "release"
     },
@@ -63,25 +63,25 @@
       "target": [
         "nsis"
       ],
-      "icon": "public/logo.svg"
+      "icon": "public/logo_512.png"
     },
     "mac": {
       "target": [
         "dmg"
       ],
-      "icon": "public/logo.svg"
+      "icon": "public/logo_512.png"
     },
     "linux": {
       "target": [
         "AppImage"
       ],
-      "icon": "public/logo.svg"
+      "icon": "public/logo_512.png"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "installerIcon": "public/logo.svg"
+      "installerIcon": "public/logo_512.png"
     }
   }
 }

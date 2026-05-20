@@ -788,7 +788,7 @@ export default function ElderlyPage() {
                 </div>}
               {/* 系统品牌标识（单页打印） */}
               <div className="hidden print:flex items-center gap-2 mb-3 px-1">
-                <img src="/yuehuo-activity-manager/logo.svg" alt="" className="h-6 w-auto" />
+                <img src="./logo.svg" alt="" className="h-6 w-auto" />
                 <span className="text-xs font-bold text-gray-700">悦活</span>
                 {brandStore.config.enabled && brandStore.config.base64 && (
                   <>
@@ -1005,7 +1005,7 @@ export default function ElderlyPage() {
         <div className="hidden print:block">
           {/* 系统品牌标识 + 用户 Logo */}
           <div className="flex items-center gap-2 mb-4 px-4 pt-2">
-            <img src="/yuehuo-activity-manager/logo.svg" alt="" className="h-7 w-auto" />
+            <img src="./logo.svg" alt="" className="h-7 w-auto" />
             <span className="text-sm font-bold text-gray-700">悦活</span>
             {brandStore.config.enabled && brandStore.config.base64 && (
               <>

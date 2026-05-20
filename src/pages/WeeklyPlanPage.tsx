@@ -556,7 +556,7 @@ export default function WeeklyPlanPage() {
 
         {/* 系统品牌标识 — 打印始终显示，不可移除 */}
         <div className="hidden print:flex items-center gap-2 mb-2 px-2">
-          <img src="/yuehuo-activity-manager/logo.svg" alt="" className="h-6 w-auto" />
+          <img src="./logo.svg" alt="" className="h-6 w-auto" />
           <span className="text-sm font-bold text-gray-700">悦活</span>
           {brandStore.config.enabled && brandStore.config.base64 && (
             <>

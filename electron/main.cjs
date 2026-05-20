@@ -12,7 +12,7 @@ function createWindow() {
     title: '悦活 - 养老院活动管理系统',
     icon: path.join(__dirname, '../public/logo.svg'),
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
     },

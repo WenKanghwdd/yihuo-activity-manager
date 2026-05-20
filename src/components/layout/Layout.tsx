@@ -18,7 +18,7 @@ export default function Layout() {
       <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50 }} className="no-print flex h-14 items-center bg-white border-b border-warm-200 shadow-sm px-4 lg:px-6">
         {/* Logo */}
         <div className="flex items-center gap-2 shrink-0">
-          <img src="/yuehuo-activity-manager/logo.svg" alt="悦活" className="h-9 w-auto" />
+          <img src="./logo.svg" alt="悦活" className="h-9 w-auto" />
           <span className="text-base font-bold text-warm-800 hidden sm:inline">悦活</span>
         </div>
 
