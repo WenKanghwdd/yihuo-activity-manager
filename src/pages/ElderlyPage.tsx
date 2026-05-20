@@ -8,6 +8,7 @@ import {
   Users,
   X,
   Trash2,
+  FileText,
 } from 'lucide-react';
 import { useElderlyStore } from '../store/elderlyStore';
 import { useActivityRecordStore } from '../store/activityRecordStore';
@@ -120,7 +121,10 @@ export default function ElderlyPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [batchDate, setBatchDate] = useState(new Date().toISOString().split('T')[0]);
-  const [batchTimeSlot, setBatchTimeSlot] = useState(DEFAULT_TIME_SLOTS[0].id);
+  const [batchSlotMode, setBatchSlotMode] = useState<'morning' | 'afternoon' | 'both'>('morning');
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [printMode, setPrintMode] = useState<'separate' | 'combined'>('separate');
+  const [printingElderly, setPrintingElderly] = useState<Elderly[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(
@@ -301,7 +305,7 @@ export default function ElderlyPage() {
 
       {/* Selection Bar */}
       {selectedIds.length > 0 && (
-        <div className="bg-warm-500/10 border border-warm-200 rounded-lg px-4 py-2 flex flex-wrap items-center gap-3 no-print">
+        <div className="bg-warm-500/10 border border-warm-200 rounded-lg px-4 py-2 flex flex-wrap items-center gap-2 no-print">
           <span className="text-sm text-warm-700 font-medium">已选 {selectedIds.length} 人</span>
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-warm-500">日期：</span>
@@ -312,29 +316,70 @@ export default function ElderlyPage() {
               className="px-2 py-1 border border-warm-200 rounded text-xs outline-none focus:ring-2 focus:ring-warm-500 bg-white"
             />
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <span className="text-xs text-warm-500">时段：</span>
-            <select
-              value={batchTimeSlot}
-              onChange={(e) => setBatchTimeSlot(e.target.value)}
-              className="px-2 py-1 border border-warm-200 rounded text-xs outline-none focus:ring-2 focus:ring-warm-500 bg-white"
-            >
-              {DEFAULT_TIME_SLOTS.map((s) => (
-                <option key={s.id} value={s.id}>{s.label}</option>
-              ))}
-            </select>
+            <button
+              onClick={() => setBatchSlotMode('morning')}
+              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                batchSlotMode === 'morning'
+                  ? 'bg-warm-500 text-white'
+                  : 'bg-white border border-warm-200 text-warm-600 hover:bg-warm-50'
+              }`}
+            >上午</button>
+            <button
+              onClick={() => setBatchSlotMode('afternoon')}
+              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                batchSlotMode === 'afternoon'
+                  ? 'bg-warm-500 text-white'
+                  : 'bg-white border border-warm-200 text-warm-600 hover:bg-warm-50'
+              }`}
+            >下午</button>
+            <button
+              onClick={() => setBatchSlotMode('both')}
+              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                batchSlotMode === 'both'
+                  ? 'bg-warm-500 text-white'
+                  : 'bg-white border border-warm-200 text-warm-600 hover:bg-warm-50'
+              }`}
+            >全天</button>
           </div>
           <button
-            onClick={() => batchSetStatus(selectedIds, batchDate, batchTimeSlot, '批量标记', 'participated')}
+            onClick={() => {
+              if (batchSlotMode === 'both') {
+                batchSetStatus(selectedIds, batchDate, 'morning', '批量标记', 'participated');
+                batchSetStatus(selectedIds, batchDate, 'afternoon', '批量标记', 'participated');
+              } else {
+                batchSetStatus(selectedIds, batchDate, batchSlotMode, '批量标记', 'participated');
+              }
+            }}
             className="px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs hover:bg-green-600 transition-colors"
           >
-            标记已参加
+            {batchSlotMode === 'both' ? '均已参加' : '已参加'}
           </button>
           <button
-            onClick={() => batchSetStatus(selectedIds, batchDate, batchTimeSlot, '批量标记', 'not_participated')}
+            onClick={() => {
+              if (batchSlotMode === 'both') {
+                batchSetStatus(selectedIds, batchDate, 'morning', '批量标记', 'not_participated');
+                batchSetStatus(selectedIds, batchDate, 'afternoon', '批量标记', 'not_participated');
+              } else {
+                batchSetStatus(selectedIds, batchDate, batchSlotMode, '批量标记', 'not_participated');
+              }
+            }}
             className="px-3 py-1.5 bg-red-400 text-white rounded-lg text-xs hover:bg-red-500 transition-colors"
           >
-            标记未参加
+            {batchSlotMode === 'both' ? '均未参加' : '未参加'}
+          </button>
+          <button
+            onClick={() => {
+              const selected = elderlyList.filter(e => selectedIds.includes(e.id));
+              setPrintingElderly(selected);
+              setPrintMode('separate');
+              setShowPrintModal(true);
+            }}
+            className="flex items-center gap-1 px-3 py-1.5 bg-white border border-warm-200 rounded-lg text-xs text-warm-600 hover:bg-warm-50 transition-colors"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            打印选中记录
           </button>
           <button
             onClick={deselectAll}
@@ -766,6 +811,128 @@ export default function ElderlyPage() {
         onCancel={() => setShowDeleteConfirm(null)}
         danger
       />
+
+      {/* Multi-print modal */}
+      {showPrintModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 no-print">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
+            <h3 className="font-bold text-warm-800 mb-2">打印活动记录</h3>
+            <p className="text-sm text-warm-500 mb-4">已选 {selectedIds.length} 位老人</p>
+            <div className="space-y-2 mb-4">
+              <label className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
+                printMode === 'separate' ? 'border-warm-500 bg-warm-50' : 'border-warm-200 hover:border-warm-300'
+              }`}>
+                <input
+                  type="radio"
+                  name="printMode"
+                  checked={printMode === 'separate'}
+                  onChange={() => setPrintMode('separate')}
+                  className="text-warm-500 focus:ring-warm-500"
+                />
+                <div>
+                  <p className="text-sm font-medium text-warm-700">每人一页</p>
+                  <p className="text-[10px] text-warm-400">每页打印一位老人的记录</p>
+                </div>
+              </label>
+              <label className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
+                printMode === 'combined' ? 'border-warm-500 bg-warm-50' : 'border-warm-200 hover:border-warm-300'
+              }`}>
+                <input
+                  type="radio"
+                  name="printMode"
+                  checked={printMode === 'combined'}
+                  onChange={() => setPrintMode('combined')}
+                  className="text-warm-500 focus:ring-warm-500"
+                />
+                <div>
+                  <p className="text-sm font-medium text-warm-700">打印在同一页</p>
+                  <p className="text-[10px] text-warm-400">所有人记录打印在同一张纸上</p>
+                </div>
+              </label>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowPrintModal(false);
+                  setPrintingElderly([]);
+                }}
+                className="px-4 py-2 border border-warm-200 rounded-lg text-sm text-warm-600 hover:bg-warm-50"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => {
+                  setShowPrintModal(false);
+                  setTimeout(() => window.print(), 100);
+                }}
+                className="px-4 py-2 bg-warm-500 text-white rounded-lg text-sm hover:bg-warm-600"
+              >
+                确认打印
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden print-only content: multi-person records */}
+      {printingElderly.length > 0 && (
+        <div className="hidden print:block">
+          {printingElderly.map((elderly, idx) => (
+            <div
+              key={elderly.id}
+              style={printMode === 'separate' && idx > 0 ? { pageBreakBefore: 'always' } : undefined}
+              className="p-4"
+            >
+              <h2 className="text-base font-bold mb-1" style={{ fontFamily: 'serif' }}>
+                {elderly.name}
+                {elderly.roomNumber ? ` - ${elderly.roomNumber}` : ''}
+              </h2>
+              <p className="text-[10px] text-gray-500 mb-3">
+                活动记录 · 当前周 ({weekDates[0]} ~ {weekDates[6]})
+              </p>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+                <thead>
+                  <tr style={{ background: '#f5f0eb' }}>
+                    <th style={{ padding: '6px 8px', border: '1px solid #e0d5c8', textAlign: 'left' }}>日期</th>
+                    {DEFAULT_TIME_SLOTS.map(s => (
+                      <th key={s.id} style={{ padding: '6px 8px', border: '1px solid #e0d5c8', textAlign: 'center' }}>{s.label}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {weekDates.map(date => {
+                    const elderlyRecords = records.filter(
+                      r => r.elderlyId === elderly.id && r.date === date
+                    );
+                    return (
+                      <tr key={date}>
+                        <td style={{ padding: '6px 8px', border: '1px solid #e0d5c8', fontWeight: 500 }}>
+                          {formatDate(date).slice(5)}
+                        </td>
+                        {DEFAULT_TIME_SLOTS.map(slot => {
+                          const record = elderlyRecords.find(r => r.timeSlotId === slot.id);
+                          const activityName = record?.activityName || '';
+                          const statusText = record?.status === 'participated' ? '✓ 已参加'
+                            : record?.status === 'not_participated' ? '✗ 未参加'
+                            : '-';
+                          return (
+                            <td key={slot.id} style={{ padding: '6px 8px', border: '1px solid #e0d5c8', textAlign: 'center' }}>
+                              <div>{statusText}</div>
+                              {activityName && (
+                                <div style={{ fontSize: '9px', color: '#8b7355' }}>{activityName}</div>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
