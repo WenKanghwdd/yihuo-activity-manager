@@ -74,11 +74,13 @@ export default function ActivityCard({ activity, onClick, onSelect, showSelect }
               选择此活动
             </button>
           )}
-          <a href={activity.buyLink} target="_blank" rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1 px-3 py-1.5 text-sm bg-white border border-warm-200 text-gray-600 rounded-lg hover:border-orange-300 hover:text-orange-600 transition-colors">
-            <ShoppingBag className="w-3.5 h-3.5" />
-            购买素材
-          </a>
+          {activity.buyLink && (
+            <a href={activity.buyLink} target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1 px-3 py-1.5 text-sm bg-white border border-warm-200 text-gray-600 rounded-lg hover:border-orange-300 hover:text-orange-600 transition-colors">
+              <ShoppingBag className="w-3.5 h-3.5" />
+              购买素材
+            </a>
+          )}
         </div>
 
         {/* Equipment list */}

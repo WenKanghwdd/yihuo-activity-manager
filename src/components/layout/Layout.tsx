@@ -10,100 +10,85 @@ const navItems = [
 ];
 
 export default function Layout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  const toggleSidebar = () => {
-    if (window.innerWidth >= 1024) {
-      setSidebarCollapsed(!sidebarCollapsed);
-    } else {
-      setSidebarOpen(!sidebarOpen);
-    }
-  };
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-warm-50">
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-20 bg-black/30 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={`no-print
-          fixed inset-y-0 left-0 z-30 flex flex-col bg-gradient-to-b from-red-700 to-red-900 text-white
-          transition-all duration-300
-          ${sidebarCollapsed ? 'w-16' : 'w-56'}
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0
-        `}
-      >
-        {/* Logo area */}
-        <div className="flex items-center gap-2 px-3 py-5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-400/30 text-amber-200 text-xl font-bold">
-            悦
-          </div>
-          <div className={`overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
-            <h1 className="text-lg font-bold leading-tight text-amber-100 whitespace-nowrap">悦活</h1>
-            <p className="text-xs text-amber-300/70 whitespace-nowrap">活动管理平台</p>
-          </div>
+    <>
+      {/* Top Navigation Bar — fixed at top */}
+      <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50 }} className="no-print flex h-14 items-center bg-white border-b border-warm-200 shadow-sm px-4 lg:px-6">
+        {/* Logo */}
+        <div className="flex items-center gap-2 shrink-0">
+          <img src="/yuehuo-activity-manager/logo.svg" alt="悦活" className="h-9 w-auto" />
+          <span className="text-base font-bold text-warm-800 hidden sm:inline">悦活</span>
         </div>
 
-        {/* Nav links */}
-        <nav className="mt-2 flex-1 space-y-1 px-2">
+        {/* Desktop nav links */}
+        <nav className="hidden md:flex items-center gap-1 ml-8 flex-1">
           {navItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               end={item.path === '/'}
-              onClick={() => {
-                if (window.innerWidth < 1024) setSidebarOpen(false);
-              }}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-2.5 py-2.5 text-sm font-medium transition-colors ${
+                `flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-amber-400/20 text-amber-200 shadow-sm'
-                    : 'text-red-100/80 hover:bg-red-800/50 hover:text-amber-200'
-                } ${sidebarCollapsed ? 'justify-center' : ''}`
+                    ? 'bg-red-50 text-red-700'
+                    : 'text-warm-600 hover:bg-warm-100 hover:text-warm-800'
+                }`
               }
-              title={sidebarCollapsed ? item.label : undefined}
             >
-              <item.icon className="h-5 w-5 shrink-0" />
-              <span className={`overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
-                {item.label}
-              </span>
+              <item.icon className="w-4 h-4" />
+              {item.label}
             </NavLink>
           ))}
         </nav>
 
-        {/* Footer */}
-        <div className={`border-t border-amber-800/30 px-3 py-3 text-xs text-amber-300/50 text-center overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'opacity-0 h-0 py-0' : 'opacity-100'}`}>
-          悦活 v1.0 · 本地数据
-        </div>
-      </aside>
+        {/* Mobile hamburger */}
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="md:hidden rounded-lg p-1.5 text-warm-600 hover:bg-warm-100 ml-auto transition-colors"
+          aria-label="切换菜单"
+        >
+          {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
 
-      {/* Main content area */}
-      <div className={`transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-56'}`}>
-        {/* Top bar */}
-        <header className="no-print sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-warm-200 bg-white/95 backdrop-blur-sm px-4">
-          <button
-            onClick={toggleSidebar}
-            className="rounded-lg p-1.5 text-warm-600 hover:bg-warm-100 transition-colors"
-            aria-label={sidebarCollapsed ? '展开菜单' : '收起菜单'}
-          >
-            {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
-          <span className="text-lg font-bold text-warm-700">悦活</span>
-        </header>
+        {/* Version tag */}
+        <span className="hidden lg:inline text-xs text-warm-300 ml-auto">v1.0</span>
+      </header>
 
-        {/* Page content */}
-        <main className="p-4 sm:p-6 lg:p-8 print:p-0">
-          <Outlet />
-        </main>
-      </div>
-    </div>
+      {/* Mobile overlay + dropdown */}
+      {menuOpen && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/30" onClick={() => setMenuOpen(false)} />
+          <div className="fixed top-14 left-0 right-0 z-40 bg-white border-b border-warm-200 shadow-lg md:hidden">
+            <nav className="flex flex-col p-2">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  end={item.path === '/'}
+                  onClick={() => setMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-red-50 text-red-700'
+                        : 'text-warm-600 hover:bg-warm-50'
+                    }`
+                  }
+                >
+                  <item.icon className="w-4 h-4" />
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+        </>
+      )}
+
+      {/* Page content — offset for fixed header */}
+      <main className="min-h-screen bg-warm-50 px-4 sm:px-6 lg:px-8 pt-14 pb-4 print:p-0">
+        <Outlet />
+      </main>
+    </>
   );
 }

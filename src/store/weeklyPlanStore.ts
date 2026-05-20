@@ -9,13 +9,13 @@ interface WeeklyPlanState {
   loading: boolean;
   loaded: boolean;
   loadOrCreatePlan: (weekStart?: string) => Promise<void>;
-  updateCell: (timeSlotId: string, weekday: Weekday, cell: Partial<Omit<WeeklyPlanCell, 'timeSlotId' | 'weekday'>>) => Promise<void>;
+  updateCell: (timeSlotId: string, weekday: Weekday, cell: Partial<Omit<WeeklyPlanCell, 'timeSlotId' | 'weekday'>>, customKey?: string) => Promise<void>;
   setTheme: (theme: ThemeType) => Promise<void>;
   setTimeRange: (weekday: Weekday, slotId: SlotId, startTime: string, endTime: string) => Promise<void>;
   batchSetTimeRange: (slotId: SlotId, startTime: string, endTime: string) => Promise<void>;
   setDayNote: (weekday: Weekday, text: string) => Promise<void>;
   batchSetDayNotes: (notes: Record<Weekday, string>) => Promise<void>;
-  clearCell: (timeSlotId: string, weekday: Weekday) => Promise<void>;
+  clearCell: (timeSlotId: string, weekday: Weekday, customKey?: string) => Promise<void>;
   getDayTimeConfig: (weekday: Weekday) => DayTimeConfig;
 }
 
@@ -59,11 +59,11 @@ export const useWeeklyPlanStore = create<WeeklyPlanState>((set, get) => ({
     set({ currentPlan: plan, loaded: true, loading: false });
   },
 
-  updateCell: async (timeSlotId, weekday, updates) => {
+  updateCell: async (timeSlotId, weekday, updates, customKey) => {
     const plan = get().currentPlan;
     if (!plan) return;
 
-    const key = `${timeSlotId}-${weekday}`;
+    const key = customKey || `${timeSlotId}-${weekday}`;
     const existingCell = plan.cells[key];
     const updatedCell: WeeklyPlanCell = {
       timeSlotId,
@@ -137,10 +137,10 @@ export const useWeeklyPlanStore = create<WeeklyPlanState>((set, get) => ({
     set({ currentPlan: updated });
   },
 
-  clearCell: async (timeSlotId, weekday) => {
+  clearCell: async (timeSlotId, weekday, customKey) => {
     const plan = get().currentPlan;
     if (!plan) return;
-    const key = `${timeSlotId}-${weekday}`;
+    const key = customKey || `${timeSlotId}-${weekday}`;
     const newCells = { ...plan.cells };
     delete newCells[key];
     const updated = { ...plan, cells: newCells };

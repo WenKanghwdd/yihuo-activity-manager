@@ -7,12 +7,13 @@ import { useVenueStore } from '../store/venueStore';
 import { THEME_CONFIGS, WEEKDAY_NAMES } from '../types';
 import type { ThemeType, WeeklyPlanCell, Activity, Weekday, SlotId, DayTimeConfig } from '../types';
 import { hasOutdoorKeyword, getWeekInfo, getMonday } from '../utils/helpers';
+import { useBrandStore } from '../store/brandStore';
+import { useTemplateStore } from '../store/templateStore';
 import { useReactToPrint } from 'react-to-print';
 import ActivityDetailModal from '../components/activityLibrary/ActivityDetailModal';
 import { PRESET_IMAGES } from '../utils/presetImages';
 
 const SLOT_LABELS: Record<SlotId, string> = { morning: '上午', afternoon: '下午', evening: '晚上' };
-const SLOT_ORDER: SlotId[] = ['morning', 'afternoon']; // 上午、下午，晚上改为备注
 
 export default function WeeklyPlanPage() {
   const { currentPlan, loaded, loading, loadOrCreatePlan, updateCell, setTheme, setTimeRange, batchSetTimeRange, clearCell, setDayNote, batchSetDayNotes } =
@@ -20,9 +21,16 @@ export default function WeeklyPlanPage() {
   const { currentTheme, setTheme: setAppTheme } = useThemeStore();
   const { activities, loaded: libLoaded, loadActivities } = useActivityLibraryStore();
   const venueStore = useVenueStore();
+  const brandStore = useBrandStore();
+  const templateStore = useTemplateStore();
   const [venueEditValue, setVenueEditValue] = useState('');
   const printRef = useRef<HTMLDivElement>(null);
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [planTabs, setPlanTabs] = useState<string[]>(['计划表1']);
+  const [activeTab, setActiveTab] = useState(0);
+  const [editingTab, setEditingTab] = useState<number | null>(null);
+  const [editTabVal, setEditTabVal] = useState('');
   const [pickSlot, setPickSlot] = useState<{ slotId: string; weekday: number } | null>(null);
   const [cropSlot, setCropSlot] = useState<{ slotId: string; weekday: number } | null>(null);
   const [cropPos, setCropPos] = useState({ x: 50, y: 50 });
@@ -57,7 +65,7 @@ export default function WeeklyPlanPage() {
       reader.onload = (ev) => {
         if (ev.target?.result) {
           const data = ev.target.result as string;
-          updateCell(slotId, weekday as Weekday, { imageBase64: data });
+          doUpdateCell(slotId, weekday as Weekday, { imageBase64: data });
           saveImageToActivity(slotId, weekday, data);
         }
       };
@@ -68,7 +76,7 @@ export default function WeeklyPlanPage() {
 
   const handlePickPresetImage = (data: string) => {
     if (showImageGallery) {
-      updateCell(showImageGallery.slotId, showImageGallery.weekday as Weekday, { imageBase64: data });
+      doUpdateCell(showImageGallery.slotId, showImageGallery.weekday as Weekday, { imageBase64: data });
       saveImageToActivity(showImageGallery.slotId, showImageGallery.weekday, data);
       setShowImageGallery(null);
     }
@@ -100,6 +108,8 @@ export default function WeeklyPlanPage() {
   useEffect(() => {
     if (!libLoaded) loadActivities();
     if (!venueStore.loaded) venueStore.loadAll();
+    if (!brandStore.loaded) brandStore.loadConfig();
+    if (!templateStore.loaded) templateStore.loadTemplates();
     useWeeklyPlanStore.getState().loadOrCreatePlan(targetWeekStart);
   }, [targetWeekStart]);
 
@@ -108,8 +118,20 @@ export default function WeeklyPlanPage() {
     pageStyle: `@page { size: A4 landscape; margin: 5mm; }`,
   });
 
+  const cellKey = (slotId: string, weekday: number) =>
+    hasTabs && activeTab >= 0 ? `tab${activeTab}-${slotId}-${weekday}` : `${slotId}-${weekday}`;
+
   const getCell = (slotId: string, weekday: number): WeeklyPlanCell | undefined =>
-    currentPlan?.cells[`${slotId}-${weekday}`];
+    currentPlan?.cells[cellKey(slotId, weekday)];
+
+  // Wrapper: updateCell with tab prefix
+  const doUpdateCell = (s: string, w: number, p: Partial<WeeklyPlanCell>): void => {
+    updateCell(s, w as Weekday, p, cellKey(s, w));
+  };
+
+  const doClearCell = (s: string, w: number): void => {
+    clearCell(s, w as Weekday, cellKey(s, w));
+  };
 
   const getActivityName = (cell?: WeeklyPlanCell): string => {
     if (cell?.customText) return cell.customText;
@@ -159,7 +181,7 @@ export default function WeeklyPlanPage() {
       autoNote = first.length > 35 ? first.substring(0, 35) + '...' : first;
     }
 
-    updateCell(pickSlot.slotId, pickSlot.weekday as Weekday, {
+    doUpdateCell(pickSlot.slotId, pickSlot.weekday as Weekday, {
       activityId: activity.id,
       customText: '',
       venue: savedVenue || activity.venue || '',
@@ -179,7 +201,7 @@ export default function WeeklyPlanPage() {
   };
 
   const handleClearCell = (slotId: string, weekday: number) => {
-    clearCell(slotId, weekday as Weekday);
+    doClearCell(slotId, weekday as Weekday);
     setPickSlot(null);
     setSearchQuery('');
   };
@@ -202,6 +224,30 @@ export default function WeeklyPlanPage() {
     return !!cell.activityId || !!cell.customText;
   };
 
+  // Derive active slots from template + plan tabs
+  const templ = templateStore.getCurrentTemplate();
+  const activeSlots: SlotId[] = (templ?.timeSlots.map(s => s.slotId as SlotId)) || ['morning', 'afternoon'];
+  const hasTabs = templ?.id === 'grouped' && templ.groupLabels;
+
+  // Load/sync plan tabs
+  useEffect(() => {
+    if (!currentPlan) return;
+    const saved = (currentPlan as any).planTabs;
+    if (saved && saved.length > 0) {
+      setPlanTabs(saved);
+    } else {
+      setPlanTabs(['计划表1']);
+    }
+  }, [currentPlan?.id]);
+
+  const savePlanTabs = async (tabs: string[]) => {
+    if (!currentPlan) return;
+    const updated = { ...currentPlan, planTabs: tabs };
+    const { putItem } = await import('../db');
+    await putItem('weeklyPlans', updated);
+    useWeeklyPlanStore.getState().loadOrCreatePlan(currentPlan.weekStart);
+    setPlanTabs(tabs);
+  };
   if (loading && !loaded) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -216,8 +262,33 @@ export default function WeeklyPlanPage() {
       <div className="flex flex-wrap items-center gap-2 no-print">
         <button onClick={() => setShowThemePicker(!showThemePicker)}
           className="flex items-center gap-1.5 px-3 py-2 bg-white border border-warm-200 rounded-lg hover:bg-warm-50 text-sm text-warm-700 transition-colors">
-          <Palette className="w-4 h-4" /> 风格模板
+          <Palette className="w-4 h-4" /> 风格
         </button>
+        {/* 模板选择 */}
+        <div className="relative">
+          <button onClick={() => setShowTemplatePicker(!showTemplatePicker)}
+            className="flex items-center gap-1.5 px-3 py-2 bg-white border border-warm-200 rounded-lg hover:bg-warm-50 text-sm text-warm-700 transition-colors">
+            <RotateCcw className="w-4 h-4" /> 模板: {templ?.name || '标准'}
+          </button>
+          {showTemplatePicker && (
+            <div className="absolute left-0 top-full mt-1 z-20 bg-white border border-warm-200 rounded-lg shadow-lg p-2 w-56"
+              onMouseLeave={() => setShowTemplatePicker(false)}>
+              <p className="text-xs text-warm-500 px-2 py-1">选择周计划模板</p>
+              {templateStore.templates.map(t => (
+                <button key={t.id}
+                  onClick={() => { templateStore.setCurrentTemplate(t.id); setShowTemplatePicker(false); }}
+                  className={`w-full text-left px-2 py-2 rounded-lg text-sm transition-colors ${
+                    templateStore.currentTemplateId === t.id
+                      ? 'bg-warm-100 text-warm-800 font-medium'
+                      : 'text-warm-600 hover:bg-warm-50'
+                  }`}>
+                  <div className="text-sm">{t.name}</div>
+                  <div className="text-[10px] text-warm-400">{t.description}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         {/* 周导航 */}
         <button onClick={() => {
           // 简单字符串加减日期，避免 Date 时区问题
@@ -384,7 +455,7 @@ export default function WeeklyPlanPage() {
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-sm font-semibold text-warm-800 mb-4">统一设置所有时间</h3>
             <div className="flex flex-col gap-4">
-              {SLOT_ORDER.map((slotId) => {
+              {activeSlots.map((slotId) => {
                 const vals = uniTime[slotId];
                 return (
                   <div key={slotId} className="flex items-center gap-2">
@@ -412,10 +483,88 @@ export default function WeeklyPlanPage() {
         </div>
       )}
 
+      {/* ===== 多计划表标签 ===== */}
+      {hasTabs && (
+        <div className="no-print flex items-center gap-1 overflow-x-auto pb-1 border-b border-warm-200">
+          {planTabs.map((tab, idx) => (
+            <div key={idx} className="flex items-center">
+              {editingTab === idx ? (
+                <input type="text" value={editTabVal}
+                  onChange={e => setEditTabVal(e.target.value)}
+                  onBlur={async () => {
+                    if (editTabVal.trim()) {
+                      const newTabs = [...planTabs];
+                      newTabs[idx] = editTabVal.trim();
+                      await savePlanTabs(newTabs);
+                    }
+                    setEditingTab(null);
+                  }}
+                  onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+                  className="w-24 px-2 py-1 text-sm border border-warm-400 rounded outline-none"
+                  autoFocus />
+              ) : (
+                <button onClick={() => setActiveTab(idx)}
+                  onDoubleClick={() => { setEditingTab(idx); setEditTabVal(tab); }}
+                  className={`px-3 py-1.5 text-sm rounded-t-lg transition-colors whitespace-nowrap ${
+                    activeTab === idx
+                      ? 'bg-warm-500 text-white font-medium'
+                      : 'bg-warm-50 text-warm-600 hover:bg-warm-100'
+                  }`}>
+                  {tab}
+                </button>
+              )}
+            </div>
+          ))}
+          <button onClick={async () => {
+            const newTabs = [...planTabs, `计划表${planTabs.length + 1}`];
+            await savePlanTabs(newTabs);
+            setActiveTab(newTabs.length - 1);
+          }}
+            className="px-2 py-1.5 text-sm text-warm-400 hover:text-warm-600 transition-colors"
+            title="新增计划表">
+            + 新增
+          </button>
+          {planTabs.length > 1 && (
+            <button onClick={async () => {
+              if (!confirm(`删除「${planTabs[activeTab]}」？该表数据将一并清除。`)) return;
+              const newTabs = planTabs.filter((_, i) => i !== activeTab);
+              // Remove tab cells from plan
+              if (currentPlan) {
+                const newCells = { ...currentPlan.cells };
+                Object.keys(newCells).forEach(key => {
+                  if (key.startsWith(`tab${activeTab}-`)) delete newCells[key];
+                });
+                const { putItem } = await import('../db');
+                await putItem('weeklyPlans', { ...currentPlan, cells: newCells, planTabs: newTabs });
+                useWeeklyPlanStore.getState().loadOrCreatePlan(currentPlan.weekStart);
+              }
+              setPlanTabs(newTabs);
+              if (activeTab >= newTabs.length) setActiveTab(newTabs.length - 1);
+            }}
+              className="px-2 py-1.5 text-xs text-red-400 hover:text-red-600 transition-colors"
+              title="删除当前计划表">
+              ✕
+            </button>
+          )}
+        </div>
+      )}
+
       {/* ===== 周计划表（打印区域，含标题） ===== */}
       <div ref={printRef}
-        className="w-full max-w-[297mm] mx-auto print:pt-[1cm] print:pb-[1cm]"
+        className="w-full max-w-[297mm] mx-auto print-full-page"
         style={{ minWidth: '700px', backgroundColor: theme.bg }}>
+
+        {/* 系统品牌标识 — 打印始终显示，不可移除 */}
+        <div className="hidden print:flex items-center gap-2 mb-2 px-2">
+          <img src="/yuehuo-activity-manager/logo.svg" alt="" className="h-6 w-auto" />
+          <span className="text-sm font-bold text-gray-700">悦活</span>
+          {brandStore.config.enabled && brandStore.config.base64 && (
+            <>
+              <span className="text-[10px] text-gray-300 mx-1">|</span>
+              <img src={brandStore.config.base64} alt="" className={brandStore.config.size === 'small' ? 'h-4 w-auto' : brandStore.config.size === 'large' ? 'h-8 w-auto' : 'h-6 w-auto'} />
+            </>
+          )}
+        </div>
 
         {/* 周计划标题 */}
         {currentPlan && (() => {
@@ -467,7 +616,7 @@ export default function WeeklyPlanPage() {
             </tr>
           </thead>
           <tbody>
-            {SLOT_ORDER.map((slotId) => (
+            {activeSlots.map((slotId) => (
               <tr key={slotId}>
                 {/* 左侧时段标 — 只在这里显示时间 */}
                 <td className="p-2 text-center border-2 align-middle"
@@ -530,12 +679,12 @@ export default function WeeklyPlanPage() {
                               <button onClick={(e) => { e.stopPropagation();
                                 const h = cell.imageHeight || 80;
                                 const nextH = h >= 80 ? 40 : h >= 60 ? 80 : 60;
-                                updateCell(slotId, day as Weekday, { imageHeight: nextH });
+                                doUpdateCell(slotId, day as Weekday, { imageHeight: nextH });
                               }}
                                 className="opacity-0 group-hover:opacity-100 px-2 py-0.5 bg-blue-500/90 text-white text-[10px] rounded">
                                 {cell.imageHeight || 80}px
                               </button>
-                              <button onClick={(e) => { e.stopPropagation(); updateCell(slotId, day as Weekday, { imageBase64: null }); }}
+                              <button onClick={(e) => { e.stopPropagation(); doUpdateCell(slotId, day as Weekday, { imageBase64: null }); }}
                                 className="opacity-0 group-hover:opacity-100 px-2 py-0.5 bg-red-500/90 text-white text-[10px] rounded">
                                 删除
                               </button>
@@ -573,7 +722,7 @@ export default function WeeklyPlanPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            clearCell(slotId, day as Weekday);
+                            doClearCell(slotId, day as Weekday);
                           }}
                           className="absolute top-0.5 right-0.5 text-[9px] text-red-400 hover:text-red-600 print:hidden z-20"
                           title="移除活动"
@@ -615,7 +764,7 @@ export default function WeeklyPlanPage() {
                             venueStore.openVenueEditor(
                               `${WEEKDAY_NAMES[day as Weekday]} ${SLOT_LABELS[slotId as SlotId]}`,
                               cell?.venue || '',
-                              (v) => updateCell(slotId, day as Weekday, { venue: v })
+                              (v) => doUpdateCell(slotId, day as Weekday, { venue: v })
                             );
                           }}
                           className="w-full text-center text-xs print:text-sm leading-tight px-1 py-0.5 rounded flex items-center justify-center gap-1"
@@ -631,7 +780,7 @@ export default function WeeklyPlanPage() {
                         <textarea
                           value={cell?.note || ''}
                           onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => updateCell(slotId, day as Weekday, { note: e.target.value })}
+                          onChange={(e) => doUpdateCell(slotId, day as Weekday, { note: e.target.value })}
                           placeholder="提醒..."
                           rows={2}
                           className={`w-full text-center text-xs print:text-sm leading-tight px-1 py-0.5 rounded resize-vertical outline-none ${
@@ -653,6 +802,7 @@ export default function WeeklyPlanPage() {
         </table>
 
         {/* ===== 天气变化提醒 ===== */}
+        {templ?.hasWeather !== false && (
         <div className="mt-3 print:mt-2">
           <div className="flex items-center justify-center gap-2 mb-1">
             <span className="text-xl print:text-2xl font-black text-warm-700 " style={{fontFamily:"Microsoft YaHei,MicrosoftYaHei,sans-serif"}}>🌤 天气变化提醒</span>
@@ -675,6 +825,7 @@ export default function WeeklyPlanPage() {
             {currentPlan?.weatherReminder || '点击此处添加天气变化提醒...'}
           </div>
         </div>
+        )}
       </div>
 
       {/* ===== 活动选择弹窗 ===== */}
@@ -735,7 +886,7 @@ export default function WeeklyPlanPage() {
                 const name = prompt('输入活动名称：');
                 if (name?.trim()) {
                   const venue = prompt('活动场所（可选）：') || '';
-                  updateCell(pickSlot.slotId, pickSlot.weekday as Weekday, { customText: name.trim(), venue });
+                  doUpdateCell(pickSlot.slotId, pickSlot.weekday as Weekday, { customText: name.trim(), venue });
                   setPickSlot(null); setSearchQuery('');
                 }
               }}
@@ -961,7 +1112,7 @@ export default function WeeklyPlanPage() {
                 <button onClick={() => setCropSlot(null)}
                   className="px-4 py-2 border border-warm-200 rounded-lg text-sm text-warm-600 hover:bg-warm-50">取消</button>
                 <button onClick={() => {
-                  updateCell(cropSlot.slotId, cropSlot.weekday as Weekday, {
+                  doUpdateCell(cropSlot.slotId, cropSlot.weekday as Weekday, {
                     imageOffsetX: cropPos.x,
                     imageOffsetY: cropPos.y,
                   });

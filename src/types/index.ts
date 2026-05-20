@@ -9,7 +9,7 @@ export interface Activity {
   equipment: string[];
   minStaff: number;
   safetyTips: string;
-  buyLink: string;
+  buyLink?: string;
 }
 
 export type ActivityTag =
@@ -227,7 +227,6 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     equipment: ['太极服（可选）', '太极剑（可选）'],
     minStaff: 1,
     safetyTips: '注意地面防滑；高血压老人量力而行；建议穿舒适运动鞋。',
-    buyLink: 'https://s.taobao.com/search?q=太极服老人',
   },
   {
     name: '剪纸手工',
@@ -238,7 +237,6 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     equipment: ['彩纸', '剪刀', '胶水', '剪纸图案模板'],
     minStaff: 1,
     safetyTips: '使用剪刀时注意安全；可提供安全剪刀；完成后展示作品增强成就感。',
-    buyLink: 'https://s.taobao.com/search?q=剪纸材料包老人',
   },
   {
     name: '红歌合唱',
@@ -249,7 +247,6 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     equipment: ['音响设备', '麦克风', '歌词单', '投影仪'],
     minStaff: 1,
     safetyTips: '控制活动时长不超过1小时；注意音量适中；体弱老人可坐着参与。',
-    buyLink: 'https://s.taobao.com/search?q=老人合唱团歌词本',
   },
   {
     name: '公园散步',
@@ -260,7 +257,6 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     equipment: ['饮用水', '急救包', '折叠凳', '遮阳帽'],
     minStaff: 3,
     safetyTips: '⚠️ 外出活动需提前报名并获得家属同意；随行配备急救箱；注意交通安全；关注天气情况。',
-    buyLink: 'https://s.taobao.com/search?q=老人外出便携折叠凳',
   },
   {
     name: '节气养生讲座',
@@ -271,7 +267,6 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     equipment: ['投影仪', '讲稿', '茶水点心'],
     minStaff: 1,
     safetyTips: '内容通俗易懂；控制时长45-60分钟；鼓励提问互动。',
-    buyLink: 'https://s.taobao.com/search?q=二十四节气养生书',
   },
   {
     name: '棋牌对弈',
@@ -282,7 +277,6 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     equipment: ['象棋', '围棋', '扑克', '桌布', '计时器'],
     minStaff: 1,
     safetyTips: '注意久坐提醒；每30分钟建议起身活动；避免激烈竞争情绪。',
-    buyLink: 'https://s.taobao.com/search?q=老人象棋围棋套装',
   },
   {
     name: '手势舞练习',
@@ -293,7 +287,6 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     equipment: ['音响', '投影屏幕', '手势舞教学视频'],
     minStaff: 1,
     safetyTips: '动作不宜过快；坐姿完成更安全；鼓励但不强迫参与。',
-    buyLink: 'https://s.taobao.com/search?q=手势舞教学视频素材',
   },
   {
     name: '园艺种植',
@@ -304,7 +297,6 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     equipment: ['花盆', '土壤', '种子/幼苗', '浇水壶', '园艺手套'],
     minStaff: 1,
     safetyTips: '注意防滑；避免使用尖锐工具；对花粉过敏者注意防护。',
-    buyLink: 'https://s.taobao.com/search?q=老人园艺种植套装',
   },
   {
     name: '电影欣赏',
@@ -315,7 +307,6 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     equipment: ['投影仪', '音响', '幕布', '茶水点心'],
     minStaff: 1,
     safetyTips: '选择正能量主题；控制观影时长不超过2小时；中场安排休息。',
-    buyLink: 'https://s.taobao.com/search?q=经典老电影DVD合集',
   },
   {
     name: '包饺子活动',
@@ -326,6 +317,5 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     equipment: ['面粉', '馅料', '擀面杖', '面板', '保鲜膜'],
     minStaff: 2,
     safetyTips: '注意食品卫生；防止烫伤；对食物过敏者留意配料。',
-    buyLink: 'https://s.taobao.com/search?q=老人包饺子工具套装',
   },
 ];

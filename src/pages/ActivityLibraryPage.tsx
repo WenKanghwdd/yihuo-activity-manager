@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Search, Plus, Palette, X } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { Search, Plus, Palette, X, ArrowUp, Columns3, Columns2 } from 'lucide-react';
 import { useActivityLibraryStore } from '../store/activityLibraryStore';
 import { useTagStore } from '../store/tagStore';
 import { ACTIVITY_TAGS, type ActivityTag, type Activity } from '../types';
@@ -51,7 +51,7 @@ export default function ActivityLibraryPage() {
     await addActivity({
       name: formData.name, description: formData.description, venue: formData.venue,
       equipment: formData.equipment.split('\n').filter(Boolean), minStaff: formData.minStaff,
-      safetyTips: formData.safetyTips, buyLink: formData.buyLink || 'https://s.taobao.com/search?q=老人活动素材',
+      safetyTips: formData.safetyTips, buyLink: formData.buyLink,
       tags: formData.tags.length > 0 ? formData.tags : ['文娱欣赏'], images: formData.images,
     });
     setShowAdd(false);
@@ -64,6 +64,20 @@ export default function ActivityLibraryPage() {
     await tagStore.addCustomTag(newTagName.trim(), newTagColor);
     setNewTagName('');
   };
+
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [columns, setColumns] = useState(3);
+  const [showColPicker, setShowColPicker] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   if (loading) return <LoadingSpinner message="加载活动库..." />;
 
@@ -81,6 +95,24 @@ export default function ActivityLibraryPage() {
             className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 text-white text-sm rounded-lg hover:bg-orange-600 transition-colors">
             <Plus className="w-4 h-4" /> 新增活动
           </button>
+          {/* Columns toggle */}
+          <div className="relative">
+            <button onClick={() => setShowColPicker(!showColPicker)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-warm-200 text-sm rounded-lg hover:bg-warm-50 transition-colors">
+              <Columns3 className="w-4 h-4" /> {columns}列
+            </button>
+            {showColPicker && (
+              <div className="absolute right-0 top-full mt-1 z-10 bg-white border border-warm-200 rounded-lg shadow-lg p-1 flex"
+                onMouseLeave={() => setShowColPicker(false)}>
+                {[2, 3, 4, 5].map(n => (
+                  <button key={n} onClick={() => { setColumns(n); setShowColPicker(false); }}
+                    className={`px-3 py-1.5 text-sm rounded-md transition-colors ${columns === n ? 'bg-orange-100 text-orange-700 font-medium' : 'text-gray-600 hover:bg-warm-50'}`}>
+                    {n}列
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -124,7 +156,12 @@ export default function ActivityLibraryPage() {
         <EmptyState title="暂无活动"
           description={searchQuery || selectedTags.length > 0 ? '换个搜索条件试试' : '点击"新增活动"添加第一个活动'} />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className={`grid gap-4 ${
+          columns === 2 ? 'grid-cols-1 sm:grid-cols-2' :
+          columns === 3 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' :
+          columns === 4 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' :
+          'grid-cols-1 sm:grid-cols-2 lg:grid-cols-5'
+        }`}>
           {filtered.map((activity) => (
             <ActivityCard key={activity.id} activity={activity} onClick={() => setSelectedActivity(activity)} />
           ))}
@@ -270,6 +307,17 @@ export default function ActivityLibraryPage() {
       {/* Detail Modal */}
       <ActivityDetailModal activity={selectedActivity!} open={!!selectedActivity}
         onClose={() => setSelectedActivity(null)} />
+
+      {/* Back to top */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="no-print fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-orange-500 text-white shadow-lg hover:bg-orange-600 transition-all hover:scale-110 flex items-center justify-center"
+          aria-label="回到顶部"
+        >
+          <ArrowUp className="w-5 h-5" />
+        </button>
+      )}
     </div>
   );
 }

@@ -262,14 +262,16 @@ export default function ActivityDetailModal({
               </div>
             ) : (
               <>
-                <a href={editing ? '#' : (activity.buyLink || '#')} target="_blank" rel="noopener noreferrer"
-                  onClick={(e) => { if (editing) { e.preventDefault(); setBuyLinkEdit(true); } }}
-                  onContextMenu={(e) => { e.preventDefault(); setBuyLinkEdit(true); }}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-warm-500 text-white rounded-lg hover:bg-warm-600 transition-colors text-sm font-medium">
-                  <ShoppingCart className="w-4 h-4" />
-                  一键购买素材
-                  {editing && <span className="text-[10px] opacity-70">(右键改链接)</span>}
-                </a>
+                {activity.buyLink && (
+                  <a href={editing ? '#' : activity.buyLink} target="_blank" rel="noopener noreferrer"
+                    onClick={(e) => { if (editing) { e.preventDefault(); setBuyLinkEdit(true); } }}
+                    onContextMenu={(e) => { e.preventDefault(); setBuyLinkEdit(true); }}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-warm-500 text-white rounded-lg hover:bg-warm-600 transition-colors text-sm font-medium">
+                    <ShoppingCart className="w-4 h-4" />
+                    一键购买素材
+                    {editing && <span className="text-[10px] opacity-70">(右键改链接)</span>}
+                  </a>
+                )}
                 {onAddToPlan && (
                   <button onClick={() => onAddToPlan(activity)}
                     className="flex items-center gap-2 px-4 py-2.5 border border-warm-300 text-warm-700 rounded-lg hover:bg-warm-50 transition-colors text-sm font-medium">

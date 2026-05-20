@@ -33,14 +33,27 @@ body {
   .no-print {
     display: none !important;
   }
-  body {
+  html, body {
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
     background: white !important;
   }
 
-  /* 打印时放大表格字号 */
-  .print\:text-sm { font-size: 14px !important; }
-  .print\:text-base { font-size: 16px !important; }
-  .print\:text-lg  { font-size: 18px !important; }
+  /* 打印表格样式 */
+  table {
+    font-size: 12px !important;
+    width: 100% !important;
+  }
+  th, td {
+    padding: 5px 4px !important;
+  }
+
+  /* 打印内容块铺满A4 */
+  .print-full-page {
+    min-height: 100vh !important;
+    height: 100% !important;
+  }
 
   /* 强制打印背景色（主题风格） */
   * {
@@ -48,12 +61,10 @@ body {
     print-color-adjust: exact !important;
   }
 
-  table {
-    font-size: 14px !important;
-    width: 100% !important;
-  }
-  th, td {
-    padding: 6px 4px !important;
+  /* 打印内容块不跨页 */
+  .print-block {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   /* 移除页面边距，撑满A4 */
