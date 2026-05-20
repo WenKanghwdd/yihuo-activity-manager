@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Download, Trash2, AlertTriangle, Database, Shield, HardDrive, Link2, Link2Off, CheckCircle2, Loader2, Image as ImageIcon, X, Plus, RotateCcw } from 'lucide-react';
+import { Download, Trash2, AlertTriangle, Database, Shield, HardDrive, Link2, Link2Off, CheckCircle2, Loader2, Image as ImageIcon, X, Plus, RotateCcw, Monitor, FolderOpen } from 'lucide-react';
 import { getAll, clearStore } from '../db';
 import { useActivityRecordStore } from '../store/activityRecordStore';
 import { exportToExcel } from '../utils/helpers';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import type { ActivityRecord } from '../types';
 import { useFileStore, pickFileLocation, disconnectFile } from '../fileStore';
+import { isElectron, useDesktopStore, saveToFile } from '../electronFileStore';
 import { useBrandStore } from '../store/brandStore';
 import { useTemplateStore } from '../store/templateStore';
 
@@ -85,6 +86,91 @@ export default function SettingsPage() {
     loadStats();
   };
 
+  const desktopStore = isElectron() ? useDesktopStore() : null;
+
+  const DesktopStorageSection = () => (
+    <div className="bg-white rounded-xl border border-warm-100 p-5">
+      <h2 className="font-bold text-warm-800 flex items-center gap-2 mb-4">
+        <Monitor className="w-5 h-5 text-warm-500" />
+        本地数据存储
+      </h2>
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <FolderOpen className="w-5 h-5 text-green-500 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-green-700">桌面版数据已自动保存</p>
+            <p className="text-xs text-green-500">
+              {desktopStore?.syncStatus === 'saving' ? '保存中...' : `上次同步：${desktopStore?.lastSyncTime || '首次运行'}`}
+              {desktopStore?.syncStatus === 'saving' && ' · 保存中...'}
+            </p>
+          </div>
+          {desktopStore?.syncStatus === 'saving' && <Loader2 className="w-4 h-4 text-green-500 animate-spin" />}
+          {desktopStore?.syncStatus === 'saved' && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+        </div>
+        <p className="text-xs text-warm-500 leading-relaxed">
+          所有数据自动保存在应用内部目录，无需手动操作。
+          换电脑或重装系统前请使用「导出活动记录」功能备份数据。
+        </p>
+        <div className="grid grid-cols-2 gap-3 text-xs text-warm-400">
+          <div className="p-2 bg-warm-50 rounded">
+            <span className="font-medium">数据总量：</span>
+            <span>{((desktopStore?.fileSize ?? 0) / 1024).toFixed(1)} KB</span>
+          </div>
+          <div className="p-2 bg-warm-50 rounded">
+            <span className="font-medium">活动记录：</span>
+            <span>{desktopStore?.recordsCount || 0} 条</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const BrowserStorageSection = () => (
+    <div className="bg-white rounded-xl border border-warm-100 p-5">
+      <h2 className="font-bold text-warm-800 flex items-center gap-2 mb-4">
+        <HardDrive className="w-5 h-5 text-warm-500" />
+        文件持久化存储
+      </h2>
+      {fileHandle ? (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-green-700">已连接到本地文件</p>
+              <p className="text-xs text-green-500 truncate">
+                {lastSyncTime ? `上次同步：${lastSyncTime}` : '等待首次同步'}
+                {syncStatus === 'saving' && ' · 保存中...'}
+              </p>
+            </div>
+            {syncStatus === 'saving' && <Loader2 className="w-4 h-4 text-green-500 animate-spin" />}
+            {syncStatus === 'saved' && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+          </div>
+          <button
+            onClick={disconnectFile}
+            className="flex items-center gap-2 px-3 py-2 border border-warm-200 rounded-lg text-sm text-warm-600 hover:bg-warm-50 transition-colors"
+          >
+            <Link2Off className="w-4 h-4" />
+            断开文件连接
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-xs text-warm-500 leading-relaxed">
+            将数据保存到电脑上的本地文件（如桌面），即使清理浏览器缓存也不会丢失数据。
+            支持 Chrome / Edge 浏览器。
+          </p>
+          <button
+            onClick={pickFileLocation}
+            className="flex items-center gap-2 px-4 py-2.5 bg-warm-500 text-white rounded-lg text-sm font-medium hover:bg-warm-600 transition-colors"
+          >
+            <Link2 className="w-4 h-4" />
+            选择存储位置
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
   const handleClearAll = async () => {
     if (!confirm('确定要清空所有数据吗？此操作不可撤销！')) return;
     await clearStore('activityRecords');
@@ -125,50 +211,12 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* File Storage */}
-      <div className="bg-white rounded-xl border border-warm-100 p-5">
-        <h2 className="font-bold text-warm-800 flex items-center gap-2 mb-4">
-          <HardDrive className="w-5 h-5 text-warm-500" />
-          文件持久化存储
-        </h2>
-        {fileHandle ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-green-700">已连接到本地文件</p>
-                <p className="text-xs text-green-500 truncate">
-                  {lastSyncTime ? `上次同步：${lastSyncTime}` : '等待首次同步'}
-                  {syncStatus === 'saving' && ' · 保存中...'}
-                </p>
-              </div>
-              {syncStatus === 'saving' && <Loader2 className="w-4 h-4 text-green-500 animate-spin" />}
-              {syncStatus === 'saved' && <CheckCircle2 className="w-4 h-4 text-green-500" />}
-            </div>
-            <button
-              onClick={disconnectFile}
-              className="flex items-center gap-2 px-3 py-2 border border-warm-200 rounded-lg text-sm text-warm-600 hover:bg-warm-50 transition-colors"
-            >
-              <Link2Off className="w-4 h-4" />
-              断开文件连接
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-xs text-warm-500 leading-relaxed">
-              将数据保存到电脑上的本地文件（如桌面），即使清理浏览器缓存也不会丢失数据。
-              支持 Chrome / Edge 浏览器。
-            </p>
-            <button
-              onClick={pickFileLocation}
-              className="flex items-center gap-2 px-4 py-2.5 bg-warm-500 text-white rounded-lg text-sm font-medium hover:bg-warm-600 transition-colors"
-            >
-              <Link2 className="w-4 h-4" />
-              选择存储位置
-            </button>
-          </div>
-        )}
-      </div>
+      {/* 数据存储 — Electron 桌面版 vs 浏览器版 */}
+      {isElectron() ? (
+        <DesktopStorageSection />
+      ) : (
+        <BrowserStorageSection />
+      )}
 
       {/* Brand Logo */}
       <div className="bg-white rounded-xl border border-warm-100 p-5">
@@ -435,9 +483,12 @@ export default function SettingsPage() {
         <h2 className="font-bold text-warm-800 mb-2">关于</h2>
         <p className="text-sm text-warm-500">
           悦活 - 养老院活动管理系统 v1.0
+          {isElectron() ? ' 桌面版' : ' 网页版'}
         </p>
         <p className="text-xs text-warm-400 mt-1">
-          数据全部存储在本地浏览器中，不上传任何服务器。
+          {isElectron()
+            ? '所有数据存储在电脑本地。完全离线使用，不上传任何服务器。'
+            : '数据全部存储在本地浏览器中，不上传任何服务器。'}
         </p>
       </div>
 

@@ -4,11 +4,15 @@ import WeeklyPlanPage from './pages/WeeklyPlanPage';
 import ActivityLibraryPage from './pages/ActivityLibraryPage';
 import ElderlyPage from './pages/ElderlyPage';
 import SettingsPage from './pages/SettingsPage';
-import { useFileStore } from './fileStore';
+import { useAutoSave as useDesktopAutoSave } from './electronFileStore';
+import { isElectron } from './electronFileStore';
 
 function AppInit() {
-  // Mount file store at app level for continuous auto-save
-  useFileStore();
+  // Electron 环境：自动持久化到本地文件
+  // 浏览器环境：使用 File System Access API（可选，在 Settings 页配置）
+  if (isElectron()) {
+    useDesktopAutoSave();
+  }
   return null;
 }
 

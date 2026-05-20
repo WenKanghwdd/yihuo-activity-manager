@@ -115,6 +115,7 @@ export default function ElderlyPage() {
 
   const [selectedElderly, setSelectedElderly] = useState<Elderly | null>(null);
   const [showImport, setShowImport] = useState(false);
+  const [importGroupName, setImportGroupName] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [newName, setNewName] = useState('');
   const [newRoom, setNewRoom] = useState('');
@@ -230,9 +231,9 @@ export default function ElderlyPage() {
     if (!file) return;
     try {
       const data = await readExcelFile(file);
-      const groupName = prompt('请为这批老人输入分组名称：') || '默认分组';
-      await importElderly(data, groupName);
-      setShowImport(false);
+      (window as any).__importData = data;
+      setImportGroupName('');
+      setShowImport(true);
     } catch (err) {
       alert('导入失败：' + (err instanceof Error ? err.message : '文件格式有误'));
     }
@@ -829,6 +830,13 @@ export default function ElderlyPage() {
             <p className="text-xs text-warm-500 mb-4">
               请上传 .xlsx 文件，要求包含「老人姓名」「房间号」列
             </p>
+            <div className="mb-4">
+              <label className="block text-xs text-warm-600 mb-1">分组名称</label>
+              <input type="text" value={importGroupName}
+                onChange={e => setImportGroupName(e.target.value)}
+                placeholder="默认分组"
+                className="w-full px-3 py-2 border border-warm-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-warm-500" />
+            </div>
             <input
               ref={fileInputRef}
               type="file"
@@ -837,13 +845,24 @@ export default function ElderlyPage() {
               onChange={handleImportFile}
             />
             <button
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full py-3 border-2 border-dashed border-warm-200 rounded-lg text-sm text-warm-500 hover:border-warm-400 hover:text-warm-600 transition-colors"
+              onClick={async () => {
+                if (!(window as any).__importData) {
+                  fileInputRef.current?.click();
+                  return;
+                }
+                const data = (window as any).__importData;
+                const groupName = importGroupName.trim() || '默认分组';
+                await importElderly(data, groupName);
+                (window as any).__importData = null;
+                setImportGroupName('');
+                setShowImport(false);
+              }}
+              className="w-full py-3 bg-warm-500 text-white rounded-lg text-sm font-medium hover:bg-warm-600 transition-colors"
             >
-              点击选择 Excel 文件
+              {(window as any).__importData ? '确认导入' : '点击选择 Excel 文件'}
             </button>
             <button
-              onClick={() => setShowImport(false)}
+              onClick={() => { setShowImport(false); (window as any).__importData = null; }}
               className="mt-3 w-full py-2 text-sm text-warm-500 hover:text-warm-700"
             >
               取消

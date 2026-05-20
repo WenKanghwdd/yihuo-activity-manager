@@ -19,6 +19,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@tailwindcss/vite": "^4.3.0",
+    "7zip-bin": "^5.2.0",
     "idb": "^8.0.3",
     "lucide-react": "^1.16.0",
     "react": "^19.2.6",
@@ -50,7 +51,7 @@
   },
   "build": {
     "appId": "com.yuehuo.activity-manager",
-    "productName": "\u60a6\u6d3b",
+    "productName": "悦活",
     "directories": {
       "output": "release"
     },
@@ -63,7 +64,8 @@
       "target": [
         "nsis"
       ],
-      "icon": "public/logo_512.png"
+      "icon": "public/icon.ico",
+      "signAndEditExecutable": false
     },
     "mac": {
       "target": [
@@ -81,7 +83,7 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "installerIcon": "public/logo_512.png"
+      "installerIcon": "public/icon.ico"
     }
   }
 }
