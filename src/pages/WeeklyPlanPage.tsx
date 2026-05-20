@@ -90,7 +90,7 @@ export default function WeeklyPlanPage() {
     setUniTime({
       morning: { start: tc.morning.startTime, end: tc.morning.endTime },
       afternoon: { start: tc.afternoon.startTime, end: tc.afternoon.endTime },
-      evening: { start: tc.evening.startTime, end: tc.evening.endTime },
+      evening: { start: tc.evening?.startTime || '18:00', end: tc.evening?.endTime || '20:00' },
     });
   }, [currentPlan]);
 

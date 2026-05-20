@@ -103,7 +103,6 @@ export type SlotId = 'morning' | 'afternoon' | 'evening';
 export const DEFAULT_TIME_SLOTS: TimeSlot[] = [
   { id: 'morning', label: '上午', startTime: '08:00', endTime: '11:00' },
   { id: 'afternoon', label: '下午', startTime: '14:00', endTime: '17:00' },
-  { id: 'evening', label: '晚上', startTime: '18:00', endTime: '20:00' },
 ];
 
 // 每天各时段的自定义时间范围
