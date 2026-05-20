@@ -455,7 +455,7 @@ export default function ElderlyPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setShowDeleteConfirm(selectedElderly.id)}
-                    className="flex items-center gap-1 px-2 py-1.5 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                    className="flex items-center gap-1 px-2 py-1.5 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors no-print"
                     title="删除此老人"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -633,40 +633,61 @@ export default function ElderlyPage() {
                       const dayRecords = dateStr
                         ? records.filter((r) => r.elderlyId === selectedElderly.id && r.date === dateStr)
                         : [];
-                      const participated = dayRecords.filter((r) => r.status === 'participated').length;
-                      const total = dayRecords.length;
+                      const morningRecord = dayRecords.find(r => r.timeSlotId === 'morning');
+                      const afternoonRecord = dayRecords.find(r => r.timeSlotId === 'afternoon');
+                      const morningName = morningRecord?.activityName || (dateStr ? getActivityForSlot(dateStr, 'morning') : '');
+                      const afternoonName = afternoonRecord?.activityName || (dateStr ? getActivityForSlot(dateStr, 'afternoon') : '');
+                      const morningParticipated = morningRecord?.status === 'participated';
+                      const afternoonParticipated = afternoonRecord?.status === 'participated';
+                      const hasMorning = !!morningName || !!morningRecord;
+                      const hasAfternoon = !!afternoonName || !!afternoonRecord;
 
                       return (
                         <div
                           key={i}
-                          className={`aspect-square rounded-lg flex flex-col items-center justify-center text-[10px] ${
-                            dateStr
-                              ? dayRecords.length > 0
-                                ? participated === total && total > 0
-                                  ? 'bg-green-100 text-green-700'
-                                  : 'bg-amber-100 text-amber-700'
-                                : 'bg-warm-50 text-warm-400'
-                              : 'bg-transparent'
-                          }`}
+                          className={`rounded-lg p-1 flex flex-col items-center ${dateStr ? 'bg-warm-50' : 'bg-transparent'} min-h-[4.5rem]`}
                         >
                           {dateStr && (
                             <>
-                              <span className="font-medium">{day}</span>
-                              {total > 0 && (
-                                <span className="text-[8px]">{participated}/{total}</span>
-                              )}
+                              <span className="text-[9px] font-medium text-warm-500 mb-0.5">{day}</span>
+                              <div className="w-full space-y-[1px]">
+                                {hasMorning && (
+                                  <div className={`text-[8px] leading-tight px-1 py-[1px] rounded truncate text-center ${
+                                    morningParticipated
+                                      ? 'bg-blue-100 text-blue-700'
+                                      : 'bg-blue-50/50 text-blue-400'
+                                  }`}>
+                                    {morningName || '上午'}
+                                  </div>
+                                )}
+                                {hasAfternoon && (
+                                  <div className={`text-[8px] leading-tight px-1 py-[1px] rounded truncate text-center ${
+                                    afternoonParticipated
+                                      ? 'bg-orange-100 text-orange-700'
+                                      : 'bg-orange-50/50 text-orange-400'
+                                  }`}>
+                                    {afternoonName || '下午'}
+                                  </div>
+                                )}
+                              </div>
                             </>
                           )}
                         </div>
                       );
                     })}
                   </div>
-                  <div className="mt-3 flex items-center gap-4 text-[10px] text-warm-500">
+                  <div className="mt-2 flex items-center gap-3 text-[9px] text-warm-500">
                     <div className="flex items-center gap-1">
-                      <span className="w-3 h-3 rounded bg-green-100" /> 全部参加
+                      <span className="w-2.5 h-2.5 rounded bg-blue-100" /> 上午已参加
                     </div>
                     <div className="flex items-center gap-1">
-                      <span className="w-3 h-3 rounded bg-amber-100" /> 部分参加
+                      <span className="w-2.5 h-2.5 rounded bg-blue-50/50 border border-blue-200" /> 上午未参加
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="w-2.5 h-2.5 rounded bg-orange-100" /> 下午已参加
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="w-2.5 h-2.5 rounded bg-orange-50/50 border border-orange-200" /> 下午未参加
                     </div>
                   </div>
                 </div>
