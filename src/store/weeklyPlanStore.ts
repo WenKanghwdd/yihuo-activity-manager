@@ -76,6 +76,7 @@ export const useWeeklyPlanStore = create<WeeklyPlanState>((set, get) => ({
       imageOffsetY: existingCell?.imageOffsetY ?? 50,
       note: existingCell?.note ?? '',
       venue: existingCell?.venue ?? '',
+      extraActivities: existingCell?.extraActivities ?? [],
       ...(updates as unknown as Partial<WeeklyPlanCell>),
     };
 

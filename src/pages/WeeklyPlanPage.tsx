@@ -32,6 +32,7 @@ export default function WeeklyPlanPage() {
   const [editingTab, setEditingTab] = useState<number | null>(null);
   const [editTabVal, setEditTabVal] = useState('');
   const [pickSlot, setPickSlot] = useState<{ slotId: string; weekday: number } | null>(null);
+  const [extraPickSlot, setExtraPickSlot] = useState<{ slotId: string; weekday: number } | null>(null);
   const [cropSlot, setCropSlot] = useState<{ slotId: string; weekday: number } | null>(null);
   const [cropPos, setCropPos] = useState({ x: 50, y: 50 });
   const [searchQuery, setSearchQuery] = useState('');
@@ -149,6 +150,14 @@ export default function WeeklyPlanPage() {
     return '';
   };
 
+  const getExtraActivities = (cell?: WeeklyPlanCell): { act: Activity | undefined; item: import('../types').CellActivityItem }[] => {
+    if (!cell?.extraActivities) return [];
+    return cell.extraActivities.map(item => ({
+      act: activities.find(a => a.id === item.activityId),
+      item,
+    }));
+  };
+
   const getActivity = (cell?: WeeklyPlanCell): Activity | undefined =>
     cell?.activityId ? activities.find((a) => a.id === cell.activityId) : undefined;
 
@@ -207,11 +216,112 @@ export default function WeeklyPlanPage() {
     setSearchQuery('');
   };
 
+  const handlePickExtraActivity = (activity: Activity) => {
+    if (!extraPickSlot) return;
+    const savedVenue = venueStore.getActivityVenue(activity.id);
+    const cell = getCell(extraPickSlot.slotId, extraPickSlot.weekday);
+    const extras = cell?.extraActivities || [];
+    if (extras.find(e => e.activityId === activity.id)) return; // 避免重复
+    // 询问第二活动的自定义时间（可选）
+    const startTime = prompt('第二活动开始时间（可选，留空则使用时段默认时间）：', '') || undefined;
+    const endTime = prompt('第二活动结束时间（可选）：', '') || undefined;
+    doUpdateCell(extraPickSlot.slotId, extraPickSlot.weekday as Weekday, {
+      extraActivities: [...extras, {
+        activityId: activity.id,
+        venue: savedVenue || activity.venue || '',
+        startTime,
+        endTime,
+      }],
+    });
+    setExtraPickSlot(null);
+    setSearchQuery('');
+  };
+
+  const handleRemoveExtraActivity = (slotId: string, weekday: number, activityId: string) => {
+    const cell = getCell(slotId, weekday);
+    if (!cell) return;
+    doUpdateCell(slotId, weekday as Weekday, {
+      extraActivities: (cell.extraActivities || []).filter(e => e.activityId !== activityId),
+    });
+  };
+
   const handleClearCell = (slotId: string, weekday: number) => {
     doClearCell(slotId, weekday as Weekday);
     setPickSlot(null);
     setSearchQuery('');
   };
+
+  const renderActivityPicker = ({ title, onPick, onCustom, onClear, onClose }: {
+    title: string;
+    onPick: (act: Activity) => void;
+    onCustom: (name: string, venue: string) => void;
+    onClear: () => void;
+    onClose: () => void;
+  }) => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}>
+
+        <div className="flex items-center justify-between px-5 py-4 border-b border-warm-100 shrink-0">
+          <h3 className="text-base font-semibold text-warm-800">{title}</h3>
+          <button onClick={onClose}
+            className="p-1 hover:bg-warm-50 rounded-lg">
+            <X className="w-5 h-5 text-warm-400" />
+          </button>
+        </div>
+
+        <div className="px-5 py-3 border-b border-warm-100">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400" />
+            <input type="text" autoFocus value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="搜索活动..."
+              className="w-full pl-9 pr-3 py-2 border border-warm-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-warm-400" />
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-3">
+          {filteredActivities.length === 0 ? (
+            <div className="text-center py-10 text-warm-400 text-sm">暂无活动</div>
+          ) : (
+            <div className="space-y-1">
+              {filteredActivities.map((act) => (
+                <button key={act.id} onClick={() => onPick(act)}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-warm-50 transition-colors text-left border border-transparent hover:border-warm-200">
+                  <div className="w-10 h-10 rounded-lg bg-warm-100 flex items-center justify-center text-warm-500 text-xs font-bold shrink-0">
+                    {act.name.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-warm-800">{act.name}</p>
+                    <p className="text-xs text-warm-400 truncate">{act.tags.join(' · ')}</p>
+                  </div>
+                  <span className="text-xs text-warm-300 shrink-0">选择</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="px-5 py-3 border-t border-warm-100 flex gap-2 shrink-0">
+          <button onClick={() => {
+            const name = prompt('输入活动名称：');
+            if (name?.trim()) {
+              const venue = prompt('活动场所（可选）：') || '';
+              onCustom(name.trim(), venue);
+            }
+          }}
+            className="flex-1 px-3 py-2 border border-warm-200 rounded-lg text-sm text-warm-600 hover:bg-warm-50 transition-colors">
+            手动输入
+          </button>
+          <button onClick={onClear}
+            className="px-3 py-2 border border-red-200 text-red-500 rounded-lg text-sm hover:bg-red-50 transition-colors">
+            清空
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   const applyTimeToAll = (slotId: SlotId, start: string, end: string) => {
     batchSetTimeRange(slotId, start, end);
@@ -228,7 +338,7 @@ export default function WeeklyPlanPage() {
 
   const cellHasActivity = (cell: WeeklyPlanCell | undefined): boolean => {
     if (!cell) return false;
-    return !!cell.activityId || !!cell.customText;
+    return !!cell.activityId || !!cell.customText || !!(cell.extraActivities && cell.extraActivities.length > 0);
   };
 
   // Derive active slots from template + plan tabs
@@ -760,6 +870,44 @@ export default function WeeklyPlanPage() {
                             </span>
                           )}
                         </div>
+                        {/* ===== 额外活动（第二活动） ===== */}
+                        {(cell?.extraActivities || []).map((ea) => {
+                          const eaAct = activities.find(a => a.id === ea.activityId);
+                          if (!eaAct) return null;
+                          return (
+                            <div key={ea.activityId}
+                              className="mt-1 rounded px-1 py-0.5"
+                              style={{backgroundColor:theme.accent+'10', borderLeft:'2px solid '+theme.accent}}>
+                              <div className="flex items-center gap-1">
+                                <span className="text-[13px] font-bold leading-tight flex-1"
+                                  onClick={(e) => { e.stopPropagation(); setDetailActivity(eaAct); }}>
+                                  {eaAct.name}
+                                </span>
+                                {ea.venue && <span className="text-[9px] text-warm-400">{ea.venue}</span>}
+                                <button onClick={(e) => { e.stopPropagation();
+                                  handleRemoveExtraActivity(slotId, day, ea.activityId);
+                                }}
+                                  className="text-[9px] text-red-300 hover:text-red-500 print:hidden shrink-0">✕</button>
+                              </div>
+                              {/* 第二活动时间 — 名称下方小字显示 */}
+                              {ea.startTime && ea.endTime && (
+                                <div className="text-[9px] text-warm-500 leading-tight mt-0.5 ml-0.5">
+                                  🕐 {ea.startTime}-{ea.endTime}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {/* 添加第二个活动按钮 */}
+                        {activityName && (cell?.extraActivities || []).length < 2 && (
+                          <button onClick={(e) => {
+                            e.stopPropagation();
+                            setExtraPickSlot({ slotId, weekday: day });
+                          }}
+                            className="w-full mt-1 text-[10px] text-warm-400 border border-dashed border-warm-300 rounded hover:bg-warm-50 hover:text-warm-600 transition-colors print:hidden">
+                            ＋ 添加第二个活动
+                          </button>
+                        )}
                       </div>
 
                       {/* ===== 活动场所 — 蓝色突出（始终显示） ===== */}
@@ -862,79 +1010,36 @@ export default function WeeklyPlanPage() {
         )}
       </div>
 
-      {/* ===== 活动选择弹窗 ===== */}
-      {pickSlot && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-          onClick={() => { setPickSlot(null); setSearchQuery(''); }}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}>
+      {/* ===== 活动选择弹窗（主活动） ===== */}
+      {pickSlot && renderActivityPicker({
+        title: `${WEEKDAY_NAMES[pickSlot.weekday as Weekday]} · ${SLOT_LABELS[pickSlot.slotId as SlotId]}`,
+        onPick: handlePickActivity,
+        onCustom: (name, venue) => {
+          doUpdateCell(pickSlot.slotId, pickSlot.weekday as Weekday, { customText: name, venue });
+          setPickSlot(null); setSearchQuery('');
+        },
+        onClear: () => handleClearCell(pickSlot.slotId, pickSlot.weekday),
+        onClose: () => { setPickSlot(null); setSearchQuery(''); },
+      })}
 
-            {/* 头 */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-warm-100 shrink-0">
-              <h3 className="text-base font-semibold text-warm-800">
-                {WEEKDAY_NAMES[pickSlot.weekday as Weekday]} · {SLOT_LABELS[pickSlot.slotId as SlotId]}
-              </h3>
-              <button onClick={() => { setPickSlot(null); setSearchQuery(''); }}
-                className="p-1 hover:bg-warm-50 rounded-lg">
-                <X className="w-5 h-5 text-warm-400" />
-              </button>
-            </div>
+      {/* ===== 活动选择弹窗（额外活动） ===== */}
+      {extraPickSlot && renderActivityPicker({
+        title: `${WEEKDAY_NAMES[extraPickSlot.weekday as Weekday]} · ${SLOT_LABELS[extraPickSlot.slotId as SlotId]}（第二活动）`,
+        onPick: handlePickExtraActivity,
+        onCustom: (name, venue) => {
+          const cell = getCell(extraPickSlot.slotId, extraPickSlot.weekday);
+          const extras = cell?.extraActivities || [];
+          const startTime = prompt('第二活动开始时间（可选）：', '') || undefined;
+          const endTime = prompt('第二活动结束时间（可选）：', '') || undefined;
+          doUpdateCell(extraPickSlot.slotId, extraPickSlot.weekday as Weekday, {
+            extraActivities: [...extras, { activityId: name, venue, startTime, endTime }],
+          });
+          setExtraPickSlot(null); setSearchQuery('');
+        },
+        onClear: () => { setExtraPickSlot(null); setSearchQuery(''); },
+        onClose: () => { setExtraPickSlot(null); setSearchQuery(''); },
+      })}
 
-            {/* 搜索 */}
-            <div className="px-5 py-3 border-b border-warm-100">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400" />
-                <input type="text" autoFocus value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="搜索活动..."
-                  className="w-full pl-9 pr-3 py-2 border border-warm-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-warm-400" />
-              </div>
-            </div>
-
-            {/* 活动列表 */}
-            <div className="flex-1 overflow-y-auto px-5 py-3">
-              {filteredActivities.length === 0 ? (
-                <div className="text-center py-10 text-warm-400 text-sm">暂无活动</div>
-              ) : (
-                <div className="space-y-1">
-                  {filteredActivities.map((act) => (
-                    <button key={act.id} onClick={() => handlePickActivity(act)}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-warm-50 transition-colors text-left border border-transparent hover:border-warm-200">
-                      <div className="w-10 h-10 rounded-lg bg-warm-100 flex items-center justify-center text-warm-500 text-xs font-bold shrink-0">
-                        {act.name.charAt(0)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-warm-800">{act.name}</p>
-                        <p className="text-xs text-warm-400 truncate">{act.tags.join(' · ')}</p>
-                      </div>
-                      <span className="text-xs text-warm-300 shrink-0">选择 →</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* 底部按钮 */}
-            <div className="px-5 py-3 border-t border-warm-100 flex gap-2 shrink-0">
-              <button onClick={() => {
-                const name = prompt('输入活动名称：');
-                if (name?.trim()) {
-                  const venue = prompt('活动场所（可选）：') || '';
-                  doUpdateCell(pickSlot.slotId, pickSlot.weekday as Weekday, { customText: name.trim(), venue });
-                  setPickSlot(null); setSearchQuery('');
-                }
-              }}
-                className="flex-1 px-3 py-2 border border-warm-200 rounded-lg text-sm text-warm-600 hover:bg-warm-50 transition-colors">
-                手动输入
-              </button>
-              <button onClick={() => handleClearCell(pickSlot.slotId, pickSlot.weekday)}
-                className="px-3 py-2 border border-red-200 text-red-500 rounded-lg text-sm hover:bg-red-50 transition-colors">
-                清空
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 活动详情弹窗 */}
       {detailActivity && (

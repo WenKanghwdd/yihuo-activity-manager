@@ -33,6 +33,13 @@ export interface TimeSlot {
 // ===== 周计划 =====
 export type Weekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
+export interface CellActivityItem {
+  activityId: string;
+  venue: string;
+  startTime?: string; // HH:mm，第二活动的自定义开始时间
+  endTime?: string;   // HH:mm，第二活动的自定义结束时间
+}
+
 export interface WeeklyPlanCell {
   timeSlotId: string;
   weekday: Weekday;
@@ -44,6 +51,7 @@ export interface WeeklyPlanCell {
   imageOffsetY: number; // 图片裁剪偏移 Y (%)
   note: string;
   venue: string; // 可自定义的场所
+  extraActivities?: CellActivityItem[]; // 额外活动列表（同一时段可排多个活动）
 }
 
 export interface WeeklyPlan {
