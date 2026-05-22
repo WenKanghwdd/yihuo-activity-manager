@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Download, Trash2, AlertTriangle, Database, Shield, HardDrive, Link2, Link2Off, CheckCircle2, Loader2, Image as ImageIcon, X, Plus, RotateCcw, Monitor, FolderOpen, RefreshCw } from 'lucide-react';
+import { Download, Trash2, AlertTriangle, Database, Shield, HardDrive, Link2, Link2Off, CheckCircle2, Loader2, Image as ImageIcon, X, Plus, RotateCcw, Monitor, FolderOpen, RefreshCw, Cloud, Upload } from 'lucide-react';
 import { getAll, clearStore } from '../db';
 import { useActivityRecordStore } from '../store/activityRecordStore';
 import { exportToExcel } from '../utils/helpers';
@@ -440,6 +440,9 @@ export default function SettingsPage() {
       {/* 数据持久化状态 */}
       <DataBackupStatus />
 
+      {/* 云同步 */}
+      <CloudSyncSection />
+
       {/* Data Management */}
       <div className="bg-white rounded-xl border border-warm-100 p-5">
         <h2 className="font-bold text-warm-800 mb-4">数据管理</h2>
@@ -585,6 +588,90 @@ function DataBackupStatus() {
           刷新页面后会自动从 localStorage 恢复数据。建议定期手动备份以防万一。
         </p>
       </div>
+    </div>
+  );
+}
+
+/** 云同步卡片 */
+function CloudSyncSection() {
+  const [status, setStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
+  const [msg, setMsg] = useState('');
+  const [connected, setConnected] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    import('../syncService').then(({ checkConnection }) => {
+      checkConnection().then(setConnected);
+    });
+  }, []);
+
+  const handleSync = async () => {
+    setStatus('syncing');
+    setMsg('正在同步...');
+    try {
+      const { syncAll } = await import('../syncService');
+      const result = await syncAll((m) => setMsg(m));
+      setStatus('success');
+      setMsg(`同步完成！推送 ${result.pushed} 条，拉取 ${result.pulled} 条`);
+    } catch (e: any) {
+      setStatus('error');
+      setMsg(`同步失败: ${e.message}`);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl border border-warm-100 p-5">
+      <h2 className="font-bold text-warm-800 mb-4 flex items-center gap-2">
+        <Cloud className="w-5 h-5 text-warm-500" />
+        云同步
+      </h2>
+
+      {/* 连接状态 */}
+      <div className="flex items-center justify-between py-2 px-3 bg-warm-50 rounded-lg mb-3">
+        <span className="text-sm text-warm-600">Supabase 连接</span>
+        {connected === null ? (
+          <span className="text-xs text-warm-400">检测中...</span>
+        ) : connected ? (
+          <span className="flex items-center gap-1 text-green-600 text-sm font-medium">
+            <CheckCircle2 className="w-4 h-4" />
+            已连接
+          </span>
+        ) : (
+          <span className="flex items-center gap-1 text-amber-600 text-sm font-medium">
+            <Link2Off className="w-4 h-4" />
+            未连接
+          </span>
+        )}
+      </div>
+
+      {/* 同步按钮 & 状态 */}
+      <button
+        onClick={handleSync}
+        disabled={status === 'syncing' || connected === false}
+        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left disabled:opacity-50"
+        style={{
+          backgroundColor: status === 'error' ? '#fef2f2' : status === 'success' ? '#f0fdf4' : '#fffbeb',
+        }}
+      >
+        {status === 'syncing' ? (
+          <Loader2 className="w-5 h-5 text-warm-500 animate-spin" />
+        ) : (
+          <Upload className="w-5 h-5 text-warm-500" />
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-warm-700">
+            {status === 'syncing' ? '同步中...' : '开始同步'}
+          </p>
+          <p className="text-xs text-warm-400 truncate">
+            {msg || (connected === false
+              ? 'Supabase 未连接，请检查数据库配置'
+              : '将本地数据同步到 Supabase 云端')}
+          </p>
+        </div>
+      </button>
+
+      <p className="text-xs text-warm-400 mt-2 leading-relaxed">
+        同步前请确保网络畅通。数据以最后一次修改为准。
+      </p>
     </div>
   );
 }

@@ -23,6 +23,13 @@ function AppInit() {
     });
   }, []);
 
+  // 初始化云同步 store 注册
+  useEffect(() => {
+    import('./syncInit').then(({ initSyncStores }) => {
+      initSyncStores();
+    });
+  }, []);
+
   return null;
 }
 
