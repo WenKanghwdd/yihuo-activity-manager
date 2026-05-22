@@ -63,14 +63,29 @@ export async function getByKey<T>(storeName: string, key: string): Promise<T | u
 export async function putItem<T>(storeName: string, item: T): Promise<void> {
   const db = await getDB();
   await db.put(storeName, item);
+  // 触发 localStorage 备份
+  if (typeof window !== 'undefined') {
+    const { scheduleBackup } = await import('../persistence');
+    scheduleBackup();
+  }
 }
 
 export async function deleteItem(storeName: string, key: string): Promise<void> {
   const db = await getDB();
   await db.delete(storeName, key);
+  // 触发 localStorage 备份
+  if (typeof window !== 'undefined') {
+    const { scheduleBackup } = await import('../persistence');
+    scheduleBackup();
+  }
 }
 
 export async function clearStore(storeName: string): Promise<void> {
   const db = await getDB();
   await db.clear(storeName);
+  // 触发 localStorage 备份
+  if (typeof window !== 'undefined') {
+    const { scheduleBackup } = await import('../persistence');
+    scheduleBackup();
+  }
 }

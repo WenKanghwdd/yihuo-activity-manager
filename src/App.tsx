@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import WeeklyPlanPage from './pages/WeeklyPlanPage';
@@ -14,6 +15,14 @@ function AppInit() {
   if (isElectron()) {
     useDesktopAutoSave();
   }
+
+  // 浏览器环境：请求持久存储 + localStorage 备份
+  useEffect(() => {
+    import('./persistence').then(({ initPersistence }) => {
+      initPersistence();
+    });
+  }, []);
+
   return null;
 }
 

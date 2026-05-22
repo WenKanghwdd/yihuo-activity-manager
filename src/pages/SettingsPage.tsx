@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { Download, Trash2, AlertTriangle, Database, Shield, HardDrive, Link2, Link2Off, CheckCircle2, Loader2, Image as ImageIcon, X, Plus, RotateCcw, Monitor, FolderOpen } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Download, Trash2, AlertTriangle, Database, Shield, HardDrive, Link2, Link2Off, CheckCircle2, Loader2, Image as ImageIcon, X, Plus, RotateCcw, Monitor, FolderOpen, RefreshCw } from 'lucide-react';
 import { getAll, clearStore } from '../db';
 import { useActivityRecordStore } from '../store/activityRecordStore';
 import { exportToExcel } from '../utils/helpers';
@@ -437,6 +437,9 @@ export default function SettingsPage() {
         </p>
       </div>
 
+      {/* 数据持久化状态 */}
+      <DataBackupStatus />
+
       {/* Data Management */}
       <div className="bg-white rounded-xl border border-warm-100 p-5">
         <h2 className="font-bold text-warm-800 mb-4">数据管理</h2>
@@ -502,6 +505,86 @@ export default function SettingsPage() {
         onCancel={() => setShowCleanup(false)}
         danger
       />
+    </div>
+  );
+}
+
+/** 数据持久化状态卡片 */
+function DataBackupStatus() {
+  const [persisted, setPersisted] = useState<boolean | null>(null);
+  const [backupTime, setBackupTime] = useState<string>('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    checkStatus();
+  }, []);
+
+  const checkStatus = async () => {
+    try {
+      if (navigator.storage?.persisted) {
+        setPersisted(await navigator.storage.persisted());
+      }
+    } catch {}
+    const { getBackupTime } = await import('../persistence');
+    const t = getBackupTime();
+    setBackupTime(t ? t.toLocaleString('zh-CN') : '暂无备份');
+  };
+
+  const handleManualBackup = async () => {
+    setSaving(true);
+    const { backupToLocalStorage } = await import('../persistence');
+    await backupToLocalStorage();
+    setSaving(false);
+    await checkStatus();
+  };
+
+  return (
+    <div className="bg-white rounded-xl border border-warm-100 p-5">
+      <h2 className="font-bold text-warm-800 mb-4 flex items-center gap-2">
+        <Database className="w-5 h-5 text-warm-500" />
+        数据持久化
+      </h2>
+      <div className="space-y-3 text-sm">
+        {/* 持久存储状态 */}
+        <div className="flex items-center justify-between py-2 px-3 bg-warm-50 rounded-lg">
+          <span className="text-warm-600">浏览器持久存储</span>
+          {persisted === null ? (
+            <span className="text-warm-400">检测中...</span>
+          ) : persisted ? (
+            <span className="flex items-center gap-1 text-green-600 font-medium">
+              <CheckCircle2 className="w-4 h-4" />
+              已启用
+            </span>
+          ) : (
+            <span className="text-amber-600">未启用（数据可能被清除）</span>
+          )}
+        </div>
+
+        {/* 自动备份到 localStorage */}
+        <div className="flex items-center justify-between py-2 px-3 bg-warm-50 rounded-lg">
+          <div>
+            <span className="text-warm-600">localStorage 备份</span>
+            <p className="text-xs text-warm-400 mt-0.5">上次备份: {backupTime}</p>
+          </div>
+          <button
+            onClick={handleManualBackup}
+            disabled={saving}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-warm-500 text-white rounded-lg hover:bg-warm-600 disabled:opacity-50 text-xs font-medium transition-colors"
+          >
+            {saving ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <RefreshCw className="w-3.5 h-3.5" />
+            )}
+            {saving ? '备份中...' : '手动备份'}
+          </button>
+        </div>
+
+        <p className="text-xs text-warm-400 leading-relaxed">
+          ⚡ 每次修改数据时会自动备份到 localStorage。如 IndexedDB 数据丢失，
+          刷新页面后会自动从 localStorage 恢复数据。建议定期手动备份以防万一。
+        </p>
+      </div>
     </div>
   );
 }

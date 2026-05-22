@@ -15,7 +15,7 @@ export default function Layout() {
   return (
     <>
       {/* Top Navigation Bar — fixed at top */}
-      <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, background: 'linear-gradient(135deg, #7B68EE 0%, #E6A8D7 100%)' }} className="no-print flex h-14 items-center shadow-md px-4 lg:px-6">
+      <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, background: 'linear-gradient(135deg, #7B68EE 0%, #E6A8D7 100%)', height: 'calc(56px + env(safe-area-inset-top, 0px))' }} className="no-print safe-area-top flex items-center shadow-md px-4 lg:px-6">
         {/* Logo */}
         <div className="flex items-center gap-2 shrink-0">
           <img src="./logo.svg" alt="悦活" className="h-8 w-auto brightness-0 invert" />
@@ -60,8 +60,7 @@ export default function Layout() {
       {menuOpen && (
         <>
           <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm" onClick={() => setMenuOpen(false)} />
-          <div className="fixed top-14 left-0 right-0 z-40 shadow-xl md:hidden"
-            style={{ background: 'linear-gradient(180deg, #7B68EE 0%, #E6A8D7 100%)' }}>
+          <div className="fixed z-40 shadow-xl md:hidden" style={{top: 'calc(56px + env(safe-area-inset-top, 0px))', left: 0, right: 0, background: 'linear-gradient(180deg, #7B68EE 0%, #E6A8D7 100%)' }}>
             <nav className="flex flex-col p-2">
               {navItems.map((item) => (
                 <NavLink
@@ -87,7 +86,7 @@ export default function Layout() {
       )}
 
       {/* Page content — offset for fixed header */}
-      <main className="min-h-screen bg-gradient-to-b from-purple-50 to-warm-50 px-4 sm:px-6 lg:px-8 pt-14 pb-4 print:p-0 print:bg-white">
+      <main className="min-h-screen bg-gradient-to-b from-purple-50 to-warm-50 px-4 sm:px-6 lg:px-8 pb-4 print:p-0 print:bg-white" style={{paddingTop: 'calc(56px + env(safe-area-inset-top, 0px))'}}>
         <Outlet />
       </main>
     </>
