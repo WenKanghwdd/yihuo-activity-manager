@@ -5,3 +5,10 @@ dist/
 *.local
 .DS_Store
 release/
+
+# Capacitor generated platforms (regenerate with npx cap sync)
+android/
+ios/
+
+# Electron build output
+release/
