@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { Calendar, Library, Users, Settings, Menu, X, LogIn, User, Loader2 } from 'lucide-react';
-import { useAuth } from '../../supabaseAuth';
+import { useLazyAuth } from '../../hooks/useLazyAuth';
 
 const navItems = [
-  { path: '/', label: '周计划表', icon: Calendar },
+  { path: '/', label: '活动计划', icon: Calendar },
   { path: '/activities', label: '活动库', icon: Library },
   { path: '/elderly', label: '老人管理', icon: Users },
   { path: '/settings', label: '设置', icon: Settings },
@@ -12,7 +12,7 @@ const navItems = [
 
 export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useLazyAuth();
 
   return (
     <>

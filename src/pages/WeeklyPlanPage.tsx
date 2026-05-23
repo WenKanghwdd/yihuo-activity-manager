@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Printer, Palette, X, Clock, Search, MapPin, Plus, RotateCcw } from 'lucide-react';
+import { Printer, Palette, X, Clock, Search, MapPin, Plus, RotateCcw, FileDown, Loader2 } from 'lucide-react';
 import { useWeeklyPlanStore } from '../store/weeklyPlanStore';
 import { useThemeStore } from '../store/themeStore';
 import { useActivityLibraryStore } from '../store/activityLibraryStore';
@@ -9,7 +9,7 @@ import type { ThemeType, WeeklyPlanCell, Activity, Weekday, SlotId, DayTimeConfi
 import { hasOutdoorKeyword, getWeekInfo, getMonday } from '../utils/helpers';
 import { useBrandStore } from '../store/brandStore';
 import { useTemplateStore } from '../store/templateStore';
-import { useReactToPrint } from 'react-to-print';
+// 导出PDF使用动态 import: html2canvas + jspdf
 import ActivityDetailModal from '../components/activityLibrary/ActivityDetailModal';
 import { PRESET_IMAGES } from '../utils/presetImages';
 
@@ -121,10 +121,32 @@ export default function WeeklyPlanPage() {
     }
   }, [currentPlan?.id, currentPlan?.theme]);
 
-  const handlePrint = useReactToPrint({
-    contentRef: printRef,
-    pageStyle: `@page { size: A4 landscape; margin: 5mm; }`,
-  });
+  const [printing, setPrinting] = useState(false);
+
+  const handleExportPDF = useCallback(async () => {
+    if (!printRef.current) return;
+    setPrinting(true);
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const jsPDF = (await import('jspdf')).default;
+      const element = printRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff',
+      });
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdf = new jsPDF('l', 'mm', 'a4');
+      const w = pdf.internal.pageSize.getWidth();
+      const h = (canvas.height * w) / canvas.width;
+      pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
+      const d = new Date();
+      pdf.save(`悦活_周计划_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.pdf`);
+    } catch (e: any) {
+      console.error('导出PDF失败:', e);
+      alert('导出PDF失败: ' + (e.message || '未知错误'));
+    } finally {
+      setPrinting(false);
+    }
+  }, [printRef]);
 
   const cellKey = (slotId: string, weekday: number) =>
     hasTabs && activeTab >= 0 ? `tab${activeTab}-${slotId}-${weekday}` : `${slotId}-${weekday}`;
@@ -365,7 +387,7 @@ export default function WeeklyPlanPage() {
     useWeeklyPlanStore.getState().loadOrCreatePlan(currentPlan.weekStart);
     setPlanTabs(tabs);
   };
-  if (loading && !loaded) {
+  if (loading || (!loaded && !currentPlan)) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="animate-spin w-8 h-8 border-3 border-warm-500 border-t-transparent rounded-full" />
@@ -671,8 +693,7 @@ export default function WeeklyPlanPage() {
 
       {/* ===== 周计划表（打印区域，含标题） ===== */}
       <div ref={printRef}
-        className="w-full mx-auto print-full-page"
-        style={{ minWidth: '700px' }}>
+        className="w-full mx-auto print-full-page overflow-x-auto">
 
         {/* 系统品牌标识 — 打印始终显示，不可移除 */}
         <div className="hidden print:flex items-center gap-2 mb-2 px-2">
@@ -689,7 +710,7 @@ export default function WeeklyPlanPage() {
         {/* 周计划标题 */}
         {currentPlan && (() => {
           const info = getWeekInfo(currentPlan.weekStart);
-          let title = `${info.year}年第${info.weekNum}周 活动计划表`;
+          let title = `${info.year}年第${info.weekNum}周 活动计划`;
           let subtitle = `（${info.startDate} - ${info.endDate}）`;
 
           // 跨月显示
@@ -708,8 +729,8 @@ export default function WeeklyPlanPage() {
           );
         })()}
 
-        <table className="w-full border-collapse text-xs border-2 print-full-page"
-          style={{ tableLayout: 'fixed', borderColor: theme.border, backgroundColor: theme.bg }}>
+        <table className="border-collapse text-xs border-2 print-full-page mx-auto"
+          style={{ tableLayout: 'fixed', minWidth: '700px', borderColor: theme.border, backgroundColor: theme.bg }}>
           <colgroup>
             <col style={{ width: '70px' }} />
             {[1, 2, 3, 4, 5, 6, 7].map((d) => <col key={d} style={{ width: 'auto' }} />)}

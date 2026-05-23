@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './supabaseAuth';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import Layout from './components/layout/Layout';
 import WeeklyPlanPage from './pages/WeeklyPlanPage';
 import ActivityLibraryPage from './pages/ActivityLibraryPage';
@@ -17,15 +17,11 @@ function AppInit() {
   }
 
   useEffect(() => {
-    import('./persistence').then(({ initPersistence }) => {
-      initPersistence();
-    });
+    import('./persistence').then(({ initPersistence }) => initPersistence()).catch(() => {});
   }, []);
 
   useEffect(() => {
-    import('./syncInit').then(({ initSyncStores }) => {
-      initSyncStores();
-    });
+    import('./syncInit').then(({ initSyncStores }) => initSyncStores()).catch(() => {});
   }, []);
 
   return null;
@@ -33,8 +29,8 @@ function AppInit() {
 
 export default function App() {
   return (
-    <HashRouter>
-      <AuthProvider>
+    <ErrorBoundary>
+      <HashRouter>
         <ActivationDialog />
         <AppInit />
         <Routes>
@@ -47,7 +43,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
-      </AuthProvider>
-    </HashRouter>
+      </HashRouter>
+    </ErrorBoundary>
   );
 }

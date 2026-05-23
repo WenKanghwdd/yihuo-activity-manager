@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Download, Trash2, AlertTriangle, Database, Shield, HardDrive, Link2, Link2Off, CheckCircle2, Loader2, Image as ImageIcon, X, Plus, RotateCcw, Monitor, FolderOpen, RefreshCw, Cloud, Upload, LogIn, User } from 'lucide-react';
-import { useAuth } from '../supabaseAuth';
+import { useLazyAuth } from '../hooks/useLazyAuth';
 import { getAll, clearStore } from '../db';
 import { useActivityRecordStore } from '../store/activityRecordStore';
 import { exportToExcel } from '../utils/helpers';
@@ -445,6 +445,9 @@ export default function SettingsPage() {
       {/* 云同步 */}
       <CloudSyncSection />
 
+      {/* 账号管理 */}
+      <AccountSection />
+
       {/* Data Management */}
       <div className="bg-white rounded-xl border border-warm-100 p-5">
         <h2 className="font-bold text-warm-800 mb-4">数据管理</h2>
@@ -599,7 +602,7 @@ function CloudSyncSection() {
   const [status, setStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
   const [msg, setMsg] = useState('');
   const [connected, setConnected] = useState<boolean | null>(null);
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading, signOut } = useLazyAuth();
 
   useEffect(() => {
     import('../syncService').then(({ checkConnection }) => {
@@ -715,6 +718,178 @@ function CloudSyncSection() {
         登录后数据将同步到你的账号，不同账号数据完全隔离。
         换设备只需登录同一账号即可恢复数据。
       </p>
+    </div>
+  );
+}
+
+/** 账号管理卡片 */
+function AccountSection() {
+  const { user, signOut, updateProfile, updatePassword } = useLazyAuth();
+  const [editing, setEditing] = useState<'username' | 'password' | null>(null);
+  const [username, setUsername] = useState('');
+  const [newPass, setNewPass] = useState('');
+  const [confirmPass, setConfirmPass] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [msgType, setMsgType] = useState<'success' | 'error'>('success');
+
+  useEffect(() => {
+    if (user?.user_metadata?.username) {
+      setUsername(user.user_metadata.username);
+    }
+  }, [user]);
+
+  const handleSaveUsername = async () => {
+    if (!username.trim()) return;
+    setLoading(true);
+    const { error } = await updateProfile({ username: username.trim() });
+    setLoading(false);
+    if (error) {
+      setMsgType('error');
+      setMsg(error);
+    } else {
+      setMsgType('success');
+      setMsg('用户名已更新');
+      setEditing(null);
+    }
+    setTimeout(() => setMsg(''), 3000);
+  };
+
+  const handleChangePassword = async () => {
+    if (newPass !== confirmPass) {
+      setMsgType('error');
+      setMsg('两次密码不一致');
+      return;
+    }
+    if (newPass.length < 6) {
+      setMsgType('error');
+      setMsg('密码至少 6 位');
+      return;
+    }
+    setLoading(true);
+    const { error } = await updatePassword(newPass);
+    setLoading(false);
+    if (error) {
+      setMsgType('error');
+      setMsg(error);
+    } else {
+      setMsgType('success');
+      setMsg('密码已更新');
+      setEditing(null);
+      setNewPass('');
+      setConfirmPass('');
+    }
+    setTimeout(() => setMsg(''), 3000);
+  };
+
+  if (!user) {
+    return (
+      <div className="bg-white rounded-xl border border-warm-100 p-5">
+        <h2 className="font-bold text-warm-800 mb-4 flex items-center gap-2">
+          <User className="w-5 h-5 text-warm-500" />
+          账号管理
+        </h2>
+        <div className="flex items-center gap-3 px-4 py-3 bg-warm-50 rounded-lg">
+          <LogIn className="w-5 h-5 text-warm-400" />
+          <p className="text-sm text-warm-600">
+            登录后可管理账号信息
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-warm-100 p-5">
+      <h2 className="font-bold text-warm-800 mb-4 flex items-center gap-2">
+        <User className="w-5 h-5 text-warm-500" />
+        账号管理
+      </h2>
+
+      {/* 邮箱（只读） */}
+      <div className="flex items-center justify-between py-2 px-3 bg-warm-50 rounded-lg mb-2">
+        <div>
+          <p className="text-xs text-warm-400">邮箱</p>
+          <p className="text-sm font-medium text-warm-700">{user.email}</p>
+        </div>
+        <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">已验证</span>
+      </div>
+
+      {/* 用户名 */}
+      <div className="py-2 px-3 bg-warm-50 rounded-lg mb-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs text-warm-400">用户名</p>
+            {editing === 'username' ? (
+              <input
+                type="text"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                className="w-full mt-1 px-2 py-1 border border-warm-200 rounded text-sm outline-none focus:ring-2 focus:ring-warm-400"
+                autoFocus
+              />
+            ) : (
+              <p className="text-sm font-medium text-warm-700">
+                {user.user_metadata?.username || '未设置'}
+              </p>
+            )}
+          </div>
+          {editing === 'username' ? (
+            <div className="flex gap-1">
+              <button onClick={handleSaveUsername} disabled={loading}
+                className="px-2.5 py-1 text-xs bg-warm-500 text-white rounded-lg hover:bg-warm-600 disabled:opacity-50">
+                {loading ? '保存中...' : '保存'}
+              </button>
+              <button onClick={() => setEditing(null)}
+                className="px-2.5 py-1 text-xs text-warm-500 hover:bg-warm-100 rounded-lg">取消</button>
+            </div>
+          ) : (
+            <button onClick={() => setEditing('username')}
+              className="text-xs text-warm-500 hover:text-warm-700">修改</button>
+          )}
+        </div>
+      </div>
+
+      {/* 修改密码 */}
+      <div className="py-2 px-3 bg-warm-50 rounded-lg mb-2">
+        {editing === 'password' ? (
+          <div className="space-y-2">
+            <input type="password" value={newPass} onChange={e => setNewPass(e.target.value)}
+              placeholder="新密码（至少6位）"
+              className="w-full px-2 py-1.5 border border-warm-200 rounded text-sm outline-none focus:ring-2 focus:ring-warm-400" />
+            <input type="password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)}
+              placeholder="确认新密码"
+              className="w-full px-2 py-1.5 border border-warm-200 rounded text-sm outline-none focus:ring-2 focus:ring-warm-400" />
+            <div className="flex gap-2">
+              <button onClick={handleChangePassword} disabled={loading}
+                className="px-3 py-1.5 text-xs bg-warm-500 text-white rounded-lg hover:bg-warm-600 disabled:opacity-50">
+                {loading ? '修改中...' : '确认修改'}
+              </button>
+              <button onClick={() => setEditing(null)}
+                className="px-3 py-1.5 text-xs text-warm-500 hover:bg-warm-100 rounded-lg">取消</button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-warm-400">密码</p>
+              <p className="text-sm font-medium text-warm-700">••••••••</p>
+            </div>
+            <button onClick={() => setEditing('password')}
+              className="text-xs text-warm-500 hover:text-warm-700">修改</button>
+          </div>
+        )}
+      </div>
+
+      {/* 提示消息 */}
+      {msg && (
+        <div className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs mt-2 ${
+          msgType === 'success' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+        }`}>
+          {msgType === 'success' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+          {msg}
+        </div>
+      )}
     </div>
   );
 }
