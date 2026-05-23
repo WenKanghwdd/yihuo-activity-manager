@@ -133,11 +133,19 @@ export default function WeeklyPlanPage() {
       const canvas = await html2canvas(element, {
         scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff',
         onclone: (clonedDoc: Document) => {
-          // 1. 移除所有打印/导出时隐藏的 UI 元素（no-print、print:hidden）
+          // 1. 打印专用元素（hidden print:*）→ 去掉 hidden，让截图可见
+          clonedDoc.querySelectorAll('[class*="print:"]').forEach((el) => {
+            const cls = el.className;
+            // 确认为独立 hidden 类（不是 print:hidden 的一部分）
+            if (/(?:^|\\s)hidden(?:\\s|$)/.test(cls)) {
+              el.className = cls.replace(/(?:^|\\s)hidden(?:\\s|$)/g, ' ').replace(/\\s+/g, ' ').trim();
+            }
+          });
+          // 2. 移除所有打印时隐藏的 UI 元素（no-print、print:hidden）
           clonedDoc.querySelectorAll('.no-print, .print\\:hidden').forEach((el) => {
             el.parentNode?.removeChild(el);
           });
-          // 2. 所有 textarea 替换为纯文本 div（textareas只显示2行，截不全）
+          // 3. 所有 textarea 替换为纯文本 div（textareas只显示2行，截不全）
           clonedDoc.querySelectorAll('textarea').forEach((ta) => {
             const div = clonedDoc.createElement('div');
             div.textContent = (ta as HTMLTextAreaElement).value || '';
