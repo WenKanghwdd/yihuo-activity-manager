@@ -786,6 +786,8 @@ export default function WeeklyPlanPage() {
                         borderColor: theme.border,
                         height: '160px',
                         minHeight: '160px',
+                        overflowWrap: 'break-word',
+                        wordBreak: 'break-word',
                       }}
                       onClick={() => { setPickSlot({ slotId, weekday: day }); setSearchQuery(''); }}
                     >
@@ -881,6 +883,7 @@ export default function WeeklyPlanPage() {
                           {activityName ? (
                             <span
                               className="text-[17px] font-black leading-tight"
+                              style={{ wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'normal' }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (act) setDetailActivity(act);
@@ -904,6 +907,7 @@ export default function WeeklyPlanPage() {
                               style={{backgroundColor:theme.accent+'10', borderLeft:'2px solid '+theme.accent}}>
                               <div className="flex items-center gap-1">
                                 <span className="text-[13px] font-bold leading-tight flex-1"
+                                  style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
                                   onClick={(e) => { e.stopPropagation(); setDetailActivity(eaAct); }}>
                                   {eaAct.name}
                                 </span>
@@ -950,7 +954,7 @@ export default function WeeklyPlanPage() {
                           style={{backgroundColor:'#eff6ff', borderLeft:'3px solid #3b82f6'}}
                         >
                           <MapPin className="w-2.5 h-2.5 print:w-3 print:h-3 shrink-0 text-blue-500" />
-                          <span className="truncate text-blue-700">{cell?.venue || '点击添加场所'}</span>
+                          <span className="text-blue-700" style={{ wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'normal' }}>{cell?.venue || '点击添加场所'}</span>
                         </button>
                       </div>
 
