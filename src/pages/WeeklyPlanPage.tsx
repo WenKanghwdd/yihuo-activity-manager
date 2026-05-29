@@ -12,6 +12,10 @@ import { useTemplateStore } from '../store/templateStore';
 // 导出PDF使用动态 import: html2canvas + jspdf
 import ActivityDetailModal from '../components/activityLibrary/ActivityDetailModal';
 import { PRESET_IMAGES } from '../utils/presetImages';
+import MonthlyCalendar from '../components/weeklyPlan/MonthlyCalendar';
+import { getDailySolarTerms } from '../utils/solarTerms';
+import { getMonthlyHolidays } from '../utils/holidays';
+import { exportToPDF } from '../utils/pdfExport';
 
 const SLOT_LABELS: Record<SlotId, string> = { morning: '上午', afternoon: '下午', evening: '晚上' };
 
@@ -122,68 +126,43 @@ export default function WeeklyPlanPage() {
   }, [currentPlan?.id, currentPlan?.theme]);
 
   const [printing, setPrinting] = useState(false);
+  const [viewMode, setViewMode] = useState<'weekly' | 'monthly'>('weekly');
+  const nowDate = new Date();
+  const [viewYear, setViewYear] = useState(nowDate.getFullYear());
+  const [viewMonth, setViewMonth] = useState(nowDate.getMonth() + 1);
+  const monthlyPrintRef = useRef<HTMLDivElement>(null);
+  const solarTerms = getDailySolarTerms(viewYear, viewMonth);
+  const monthHolidays = getMonthlyHolidays(viewYear, viewMonth);
 
   const handleExportPDF = useCallback(async () => {
-    if (!printRef.current) return;
     setPrinting(true);
     try {
-      const html2canvas = (await import('html2canvas-pro')).default;
-      const jsPDF = (await import('jspdf')).default;
-      const element = printRef.current;
-      const canvas = await html2canvas(element, {
-        scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff',
-        onclone: (clonedDoc: Document) => {
-          // 1. 打印专用元素（hidden print:block/flex）→ 去 hidden，让截图可见
-          ['.hidden.print\\:block', '.hidden.print\\:flex'].forEach((sel) => {
-            clonedDoc.querySelectorAll(sel).forEach((el) => {
-              el.className = el.className
-                .replace(/(?:^|\\s)hidden(?:\\s|$)/g, ' ')
-                .replace(/\\s+/g, ' ')
-                .trim();
-            });
-          });
-          // 2. 移除所有打印时隐藏的 UI 元素（no-print、print:hidden）
-          clonedDoc.querySelectorAll('.no-print, .print\\:hidden').forEach((el) => {
-            const p = el.parentNode;
-            if (p) p.removeChild(el);
-            else console.warn('[PDF] 无法移除元素:', el.className);
-          });
-          // 3. textarea → 纯文本 div（完整显示内容）
-          clonedDoc.querySelectorAll('textarea').forEach((ta) => {
-            const p = ta.parentNode;
-            if (!p) { console.warn('[PDF] textarea 无父节点，跳过'); return; }
-            const div = clonedDoc.createElement('div');
-            div.textContent = (ta as HTMLTextAreaElement).value || '';
-            // 去掉 no-print、print:hidden 等打印控制类
-            div.className = ta.className
-              .replace(/(?:^|\\s)no-print(?:\\s|$)/g, ' ')
-              .replace(/(?:^|\\s)print\\:hidden(?:\\s|$)/g, ' ')
-              .trim();
-            div.style.cssText = ta.style.cssText +
-              ';min-height:auto;overflow:visible;white-space:pre-wrap;' +
-              'word-break:break-word;overflow-wrap:break-word;height:auto;';
-            p.replaceChild(div, ta);
-          });
-          // 4. 整体下移 0.5cm（追加，不覆盖已有 padding）
-          const root = clonedDoc.querySelector('[data-export-root]') || clonedDoc.body;
-          const curPt = root.style.paddingTop || '0';
-          root.style.paddingTop = `calc(${curPt} + 0.5cm)`;
-        },
-      });
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const pdf = new jsPDF('l', 'mm', 'a4');
-      const w = pdf.internal.pageSize.getWidth();
-      const h = (canvas.height * w) / canvas.width;
-      pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
-      const d = new Date();
-      pdf.save(`悦活_周计划_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.pdf`);
+      if (viewMode === 'monthly') {
+        if (!monthlyPrintRef.current) return;
+        await exportToPDF(monthlyPrintRef.current, '月计划', {
+          prefix: '悦活_月计划',
+          margin: 5,
+          scale: 2,
+          orientation: 'p',
+          year: viewYear,
+          month: viewMonth,
+        });
+      } else {
+        if (!printRef.current) return;
+        await exportToPDF(printRef.current, '周计划', {
+          prefix: '悦活_周计划',
+          margin: 5,
+          scale: 2,
+          orientation: 'l',
+        });
+      }
     } catch (e: any) {
       console.error('导出PDF失败:', e);
       alert('导出PDF失败: ' + (e.message || '未知错误'));
     } finally {
       setPrinting(false);
     }
-  }, [printRef]);
+  }, [viewMode, monthlyPrintRef, viewYear, viewMonth, printRef]);
 
   const cellKey = (slotId: string, weekday: number) =>
     hasTabs && activeTab >= 0 ? `tab${activeTab}-${slotId}-${weekday}` : `${slotId}-${weekday}`;
@@ -436,6 +415,25 @@ export default function WeeklyPlanPage() {
     <div className="space-y-4">
       {/* ===== 工具栏 ===== */}
       <div className="flex flex-wrap items-center gap-2 no-print">
+        {/* 视图切换 */}
+        <div className="flex items-center bg-warm-100 rounded-lg p-0.5">
+          <button onClick={() => setViewMode('weekly')}
+            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+              viewMode === 'weekly'
+                ? 'bg-white text-warm-800 font-medium shadow-sm'
+                : 'text-warm-500 hover:text-warm-700'
+            }`}>
+            周计划
+          </button>
+          <button onClick={() => setViewMode('monthly')}
+            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+              viewMode === 'monthly'
+                ? 'bg-white text-warm-800 font-medium shadow-sm'
+                : 'text-warm-500 hover:text-warm-700'
+            }`}>
+            月计划
+          </button>
+        </div>
         <button onClick={() => setShowThemePicker(!showThemePicker)}
           className="flex items-center gap-1.5 px-3 py-2 bg-white border border-warm-200 rounded-lg hover:bg-warm-50 text-sm text-warm-700 transition-colors">
           <Palette className="w-4 h-4" /> 风格
@@ -1240,7 +1238,85 @@ export default function WeeklyPlanPage() {
         </div>
       )}
 
-      {/* ===== 重置确认弹窗 ===== */}
+      {/* ===== 
+
+      {/* ===== 月计划表 ===== */}
+      {viewMode === 'monthly' && (
+        <div ref={monthlyPrintRef} data-export-root
+          className="w-full mx-auto print-full-page overflow-x-auto">
+          <div className="hidden print:flex items-center gap-2 mb-2 px-2">
+            <img src="./logo.svg" alt="" className="h-6 w-auto" />
+            <span className="text-sm font-bold text-gray-700">悦活</span>
+            {brandStore.config.enabled && brandStore.config.base64 && (
+              <>
+                <span className="text-[10px] text-gray-300 mx-1">|</span>
+                <img src={brandStore.config.base64} alt="" className={
+                  brandStore.config.size === 'small' ? 'h-4 w-auto' :
+                  brandStore.config.size === 'large' ? 'h-8 w-auto' : 'h-6 w-auto'
+                } />
+              </>
+            )}
+          </div>
+          {(() => {
+            const monthlyActivities: Record<string, string[]> = {};
+            if (currentPlan) {
+              const prefix = hasTabs ? `tab${activeTab}-` : '';
+              const mondayStr = getMonday(new Date(currentPlan.weekStart));
+              const mondayDate = new Date(mondayStr);
+              for (const d of [1,2,3,4,5,6,7] as Weekday[]) {
+                for (const s of activeSlots) {
+                  const key = prefix + s + '-' + d;
+                  const cell = currentPlan.cells[key];
+                  if (!cell) continue;
+                  const cellDate = new Date(mondayDate);
+                  cellDate.setDate(mondayDate.getDate() + d - 1);
+                  const dateKeyStr = cellDate.getFullYear() + '-' +
+                    String(cellDate.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(cellDate.getDate()).padStart(2, '0');
+                  if (!monthlyActivities[dateKeyStr]) monthlyActivities[dateKeyStr] = [];
+                  const name = cell.customText || (
+                    cell.activityId ? (activities.find(a => a.id === cell.activityId)?.name || '') : ''
+                  );
+                  if (name) monthlyActivities[dateKeyStr].push(name);
+                }
+              }
+            }
+            return (
+              <MonthlyCalendar
+                year={viewYear}
+                month={viewMonth}
+                theme={THEME_CONFIGS[currentTheme]}
+                activities={monthlyActivities}
+                solarTerms={solarTerms}
+                holidays={monthHolidays}
+                onPrevMonth={() => {
+                  if (viewMonth === 1) {
+                    setViewYear(viewYear - 1);
+                    setViewMonth(12);
+                  } else {
+                    setViewMonth(viewMonth - 1);
+                  }
+                }}
+                onNextMonth={() => {
+                  if (viewMonth === 12) {
+                    setViewYear(viewYear + 1);
+                    setViewMonth(1);
+                  } else {
+                    setViewMonth(viewMonth + 1);
+                  }
+                }}
+                onToday={() => {
+                  const td = new Date();
+                  setViewYear(td.getFullYear());
+                  setViewMonth(td.getMonth() + 1);
+                }}
+              />
+            );
+          })()}
+        </div>
+      )}
+
+{/* ===== 重置确认弹窗 ===== */}
       {showResetConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
           onClick={() => setShowResetConfirm(false)}>

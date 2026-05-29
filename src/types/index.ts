@@ -64,7 +64,7 @@ export interface WeeklyPlan {
   weatherReminder: string; // 天气变化提醒
 }
 
-export type ThemeType = 'default' | 'springFestival' | 'qingming' | 'winterSolstice' | 'midAutumn' | 'dragonBoat' | 'nationalDay';
+export type ThemeType = 'default' | 'springFestival' | 'qingming' | 'winterSolstice' | 'midAutumn' | 'dragonBoat' | 'nationalDay' | 'summerOcean';
 
 export interface ThemeConfig {
   key: ThemeType;
@@ -199,6 +199,17 @@ export const THEME_CONFIGS: Record<ThemeType, ThemeConfig> = {
     cellBg: '#f0fdf4',
     cellText: '#166534',
     accent: '#16a34a',
+  },
+  summerOcean: {
+    key: 'summerOcean',
+    label: '夏日·碧海',
+    bg: '#F8FAE7',
+    border: '#D0ECF4',
+    headerBg: '#315BB8',
+    headerText: '#ffffff',
+    cellBg: '#F8FAE7',
+    cellText: '#315BB8',
+    accent: '#7DAFDD',
   },
   nationalDay: {
     key: 'nationalDay',
