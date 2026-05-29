@@ -7,6 +7,7 @@ import { getAll, clearStore } from '../db';
 import { useActivityRecordStore } from '../store/activityRecordStore';
 import { exportToExcel } from '../utils/helpers';
 import ConfirmDialog from '../components/common/ConfirmDialog';
+import ImageLightbox from '../components/common/ImageLightbox';
 import type { ActivityRecord } from '../types';
 import { useFileStore, pickFileLocation, disconnectFile } from '../fileStore';
 import { isElectron, useDesktopStore } from '../electronFileStore';
@@ -48,6 +49,7 @@ export default function SettingsPage() {
   };
   const [recordCount, setRecordCount] = useState(0);
   const [cleanupCount, setCleanupCount] = useState(0);
+  const [lightboxImg, setLightboxImg] = useState<{ src: string; alt: string } | null>(null);
   const [showCleanup, setShowCleanup] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -547,20 +549,26 @@ export default function SettingsPage() {
           </div>
         </div>
         <div className="grid grid-cols-3 gap-3 mt-4">
-          <div className="text-center">
-            <img src="./qr-xiaohongshu.jpg" alt="小红书" className="w-full max-w-[140px] mx-auto rounded-lg border border-warm-200" />
-            <p className="text-xs text-warm-500 mt-1">小红书</p>
-          </div>
-          <div className="text-center">
-            <img src="./qr-douyin.jpg" alt="抖音" className="w-full max-w-[140px] mx-auto rounded-lg border border-warm-200" />
-            <p className="text-xs text-warm-500 mt-1">抖音</p>
-          </div>
-          <div className="text-center">
-            <img src="./qr-wechat.jpg" alt="微信" className="w-full max-w-[140px] mx-auto rounded-lg border border-warm-200" />
-            <p className="text-xs text-warm-500 mt-1">微信</p>
-          </div>
+          {[
+            { src: './qr-xiaohongshu.jpg', alt: '小红书' },
+            { src: './qr-douyin.jpg', alt: '抖音' },
+            { src: './qr-wechat.jpg', alt: '微信' },
+          ].map(qr => (
+            <div key={qr.alt} className="text-center">
+              <img src={qr.src} alt={qr.alt}
+                onClick={() => setLightboxImg(qr)}
+                className="w-full max-w-[140px] mx-auto rounded-lg border border-warm-200 cursor-pointer hover:opacity-80 transition-opacity" />
+              <p className="text-xs text-warm-500 mt-1">{qr.alt}</p>
+            </div>
+          ))}
         </div>
       </CollapsibleCard>
+
+      {/* 二维码放大 */}
+      {lightboxImg && (
+        <ImageLightbox src={lightboxImg.src} alt={lightboxImg.alt}
+          onClose={() => setLightboxImg(null)} />
+      )}
 
       {/* About */}
       <div className="bg-white rounded-xl border border-warm-100 p-5">
