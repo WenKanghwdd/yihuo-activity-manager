@@ -10,6 +10,7 @@ export function useLazyAuth() {
 
   useEffect(() => {
     let cancelled = false;
+    let unsub: (() => void) | null = null;
     const timer = setTimeout(() => { if (!cancelled) setLoading(false); }, 3000);
 
     import('../supabaseAuthLazy').then(async (auth) => {
@@ -20,11 +21,23 @@ export function useLazyAuth() {
         setLoading(false);
         clearTimeout(timer);
       }
+      // 订阅 auth 状态变化，登录/登出后 Layout 实时更新
+      const supabase = await auth.getSupabase();
+      const { data } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
+        if (!cancelled) {
+          setUser(session?.user ?? null);
+        }
+      });
+      unsub = data?.subscription?.unsubscribe ?? null;
     }).catch(() => {
       if (!cancelled) { setLoading(false); clearTimeout(timer); }
     });
 
-    return () => { cancelled = true; clearTimeout(timer); };
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      if (unsub) unsub();
+    };
   }, []);
 
   const signOut = useCallback(async () => {
