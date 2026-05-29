@@ -18,9 +18,10 @@ import { getMonthlyHolidays } from '../utils/holidays';
 import { exportToPDF } from '../utils/pdfExport';
 
 // 时间段标签：从模板中取，支持自定义时间段
+/** 从模板中获取时间段显示名称 */
 function getSlotLabel(slotId: string): string {
   const labels: Record<string, string> = { morning: '上午', afternoon: '下午', evening: '晚上' };
-  return labels[slotId] || slotId.replace('custom_', '');
+  return labels[slotId] || slotId.replace(/^custom_/, '');
 }
 
 export default function WeeklyPlanPage() {

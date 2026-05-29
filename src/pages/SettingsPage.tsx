@@ -397,12 +397,14 @@ export default function SettingsPage() {
                   placeholder="自定义时间段（如：早班、夜班）"
                   className="flex-1 px-2 py-1.5 text-xs border border-purple-200 rounded-lg outline-none focus:ring-2 focus:ring-warm-400"
                   onKeyDown={e => { if (e.key === 'Enter' && customSlotInput.trim()) {
-                    setNewTplCustomSlots(prev => [...prev, { id: 'custom_' + Date.now(), label: customSlotInput.trim() }]);
+                    const id = 'custom_' + customSlotInput.trim().toLowerCase().replace(/\s/g, '_');
+                    setNewTplCustomSlots(prev => [...prev, { id, label: customSlotInput.trim() }]);
                     setCustomSlotInput('');
                   }}} />
                 <button onClick={() => {
                   if (customSlotInput.trim()) {
-                    setNewTplCustomSlots(prev => [...prev, { id: 'custom_' + Date.now(), label: customSlotInput.trim() }]);
+                    const id = 'custom_' + customSlotInput.trim().toLowerCase().replace(/\s/g, '_');
+                    setNewTplCustomSlots(prev => [...prev, { id, label: customSlotInput.trim() }]);
                     setCustomSlotInput('');
                   }
                 }}
