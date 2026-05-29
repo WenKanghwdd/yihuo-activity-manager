@@ -527,13 +527,38 @@ export default function SettingsPage() {
           <Shield className="w-5 h-5 text-warm-500" />
           问题反馈
         </h2>
-        <p className="text-sm text-warm-600 leading-relaxed">
-          如有问题或建议，请发送邮件至：
+        <p className="text-sm text-warm-600 leading-relaxed mb-3">
+          如有问题或建议，请通过以下方式联系：
         </p>
-        <a href="mailto:zhudihwdd@gmail.com"
-          className="inline-flex items-center gap-1 mt-2 px-4 py-2 bg-warm-50 rounded-lg text-sm text-warm-700 hover:bg-warm-100 transition-colors">
-          ✉️ zhudihwdd@gmail.com
-        </a>
+        <div className="flex flex-wrap gap-4">
+          <a href="mailto:zhudihwdd@gmail.com"
+            className="flex items-center gap-1 px-4 py-2 bg-warm-50 rounded-lg text-sm text-warm-700 hover:bg-warm-100 transition-colors">
+            ✉️ 邮箱反馈
+          </a>
+          <div className="flex items-center gap-1 px-4 py-2 bg-warm-50 rounded-lg text-sm text-warm-700">
+            💬 小红书
+          </div>
+          <div className="flex items-center gap-1 px-4 py-2 bg-warm-50 rounded-lg text-sm text-warm-700">
+            🎵 抖音
+          </div>
+          <div className="flex items-center gap-1 px-4 py-2 bg-warm-50 rounded-lg text-sm text-warm-700">
+            💚 微信
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-3 mt-4">
+          <div className="text-center">
+            <img src="./qr-xiaohongshu.jpg" alt="小红书" className="w-full max-w-[140px] mx-auto rounded-lg border border-warm-200" />
+            <p className="text-xs text-warm-500 mt-1">小红书</p>
+          </div>
+          <div className="text-center">
+            <img src="./qr-douyin.jpg" alt="抖音" className="w-full max-w-[140px] mx-auto rounded-lg border border-warm-200" />
+            <p className="text-xs text-warm-500 mt-1">抖音</p>
+          </div>
+          <div className="text-center">
+            <img src="./qr-wechat.jpg" alt="微信" className="w-full max-w-[140px] mx-auto rounded-lg border border-warm-200" />
+            <p className="text-xs text-warm-500 mt-1">微信</p>
+          </div>
+        </div>
       </div>
 
       {/* About */}
