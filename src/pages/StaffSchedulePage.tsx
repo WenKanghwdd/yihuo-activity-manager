@@ -233,7 +233,7 @@ export default function StaffSchedulePage() {
           <table className="w-full text-sm">
             <thead>
               <tr>
-                <th className="sticky left-0 z-10 bg-white border-r border-b border-warm-200 px-2 py-2 text-left text-[11px] font-bold text-warm-600 print:text-[8px]" style={{ minWidth: '90px', width: '90px' }}>
+                <th className="sticky left-0 z-10 bg-white border-r border-b border-t border-warm-200 px-2 py-2 text-left text-[11px] font-bold text-warm-600 print:text-[8px]" style={{ minWidth: '90px', width: '90px' }}>
                   姓名 <span className="text-[10px] text-warm-400 font-normal">(职位)</span>
                 </th>
                 {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => {
@@ -241,7 +241,7 @@ export default function StaffSchedulePage() {
                   const isWeekend = date.getDay() === 0 || date.getDay() === 6;
                   return (
                     <th key={d}
-                      className={`px-0.5 py-1 text-center text-[9px] font-bold border-b border-warm-200 ${
+                      className={`px-0.5 py-1 text-center text-[9px] font-bold border-b border-t border-warm-200 ${
                         isWeekend ? 'text-red-400 bg-red-50' : 'text-warm-500'
                       }`}
                       style={{ minWidth: '26px', width: '26px', borderRight: '1px solid #fde0b8' }}>
