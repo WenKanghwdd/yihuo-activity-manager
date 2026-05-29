@@ -201,17 +201,17 @@ export default function StaffSchedulePage() {
 
       {/* 排班表 */}
       {staffList.length > 0 && (
-        <div ref={scheduleTableRef} className="overflow-x-auto rounded-xl border border-warm-100 bg-white shadow-sm print:border-0 print:shadow-none">
+        <div ref={scheduleTableRef} className="overflow-x-auto print:overflow-visible rounded-xl border border-warm-100 bg-white shadow-sm print:border-0 print:shadow-none">
           {/* PDF标题 — 只在打印/导出时显示 */}
           <div className="hidden print:block text-center mb-4" style={{ paddingTop: '1cm' }}>
             <h1 className="text-2xl font-bold text-gray-800" style={{ fontFamily: 'PingFang SC,Microsoft YaHei,sans-serif' }}>
               {year}年{month}月{department ? department : ''}排班表
             </h1>
           </div>
-          <table className="w-full text-sm" style={{ minWidth: '900px' }}>
+          <table className="w-full text-sm">
             <thead>
               <tr>
-                <th className="sticky left-0 z-10 bg-white border-r border-b border-warm-200 px-2 py-2 text-left text-xs font-bold text-warm-600" style={{ minWidth: '120px' }}>
+                <th className="sticky left-0 z-10 bg-white border-r border-b border-warm-200 px-1.5 py-1.5 text-left text-[9px] font-bold text-warm-600 print:text-[7px]" style={{ minWidth: '80px', width: '80px' }}>
                   姓名 <span className="text-[10px] text-warm-400 font-normal">(职位)</span>
                 </th>
                 {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => {
@@ -219,10 +219,10 @@ export default function StaffSchedulePage() {
                   const isWeekend = date.getDay() === 0 || date.getDay() === 6;
                   return (
                     <th key={d}
-                      className={`px-1 py-1.5 text-center text-[11px] font-bold border-b border-warm-200 ${
+                      className={`px-0.5 py-1 text-center text-[9px] font-bold border-b border-warm-200 ${
                         isWeekend ? 'text-red-400 bg-red-50' : 'text-warm-500'
                       }`}
-                      style={{ minWidth: '36px', borderRight: '1px solid #fde0b8' }}>
+                      style={{ minWidth: '26px', width: '26px', borderRight: '1px solid #fde0b8' }}>
                       {d}
                     </th>
                   );
@@ -282,7 +282,7 @@ export default function StaffSchedulePage() {
                               : 'hover:bg-warm-50'
                           } ${isWeekend ? 'bg-red-50/30' : ''}`}
                           style={{ height: '36px', borderRight: '1px solid #fde0b8', borderBottom: '1px solid #fde0b8' }}>
-                          <span className={`text-[11px] font-medium ${
+                          <span className={`text-[9px] font-medium ${
                             isOn ? 'text-blue-600' : 'text-warm-300'
                           }`}>
                             {isOn ? '上班' : ''}
