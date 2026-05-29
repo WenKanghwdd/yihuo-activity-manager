@@ -64,7 +64,7 @@ export interface WeeklyPlan {
   weatherReminder: string; // 天气变化提醒
 }
 
-export type ThemeType = 'default' | 'springFestival' | 'qingming' | 'winterSolstice' | 'midAutumn' | 'dragonBoat' | 'nationalDay' | 'summerOcean';
+export type ThemeType = 'default' | 'springFestival' | 'qingming' | 'winterSolstice' | 'midAutumn' | 'dragonBoat' | 'nationalDay' | 'summerOcean' | 'mintMatcha' | 'oxygenForest' | 'peachOolong' | 'twilightWisteria';
 
 export interface ThemeConfig {
   key: ThemeType;
@@ -221,6 +221,50 @@ export const THEME_CONFIGS: Record<ThemeType, ThemeConfig> = {
     cellBg: '#fff7ed',
     cellText: '#7f1d1d',
     accent: '#dc2626',
+  },
+  mintMatcha: {
+    key: 'mintMatcha',
+    label: '薄荷奶绿',
+    bg: '#F2FBF5',
+    border: '#C4E4D0',
+    headerBg: '#8FC9A6',
+    headerText: '#ffffff',
+    cellBg: '#F2FBF5',
+    cellText: '#2D5A3E',
+    accent: '#6DB08A',
+  },
+  oxygenForest: {
+    key: 'oxygenForest',
+    label: '多氧森林',
+    bg: '#EFFBF4',
+    border: '#A3DDB8',
+    headerBg: '#4EA770',
+    headerText: '#ffffff',
+    cellBg: '#EFFBF4',
+    cellText: '#1B5E30',
+    accent: '#3B8A5A',
+  },
+  peachOolong: {
+    key: 'peachOolong',
+    label: '蜜桃乌龙',
+    bg: '#FEF6F5',
+    border: '#F8D0CC',
+    headerBg: '#F2A7A0',
+    headerText: '#ffffff',
+    cellBg: '#FEF6F5',
+    cellText: '#7A3D38',
+    accent: '#E8877E',
+  },
+  twilightWisteria: {
+    key: 'twilightWisteria',
+    label: '暮色紫藤',
+    bg: '#F7F4FB',
+    border: '#D5C9E4',
+    headerBg: '#A98BCD',
+    headerText: '#ffffff',
+    cellBg: '#F7F4FB',
+    cellText: '#4A3566',
+    accent: '#9372B8',
   },
 };
 
