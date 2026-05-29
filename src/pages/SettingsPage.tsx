@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import CollapsibleCard from '../components/common/CollapsibleCard';
 import { NavLink } from 'react-router-dom';
 import { Download, Trash2, AlertTriangle, Database, Shield, HardDrive, Link2, Link2Off, CheckCircle2, Loader2, Image as ImageIcon, X, Plus, RotateCcw, Monitor, FolderOpen, RefreshCw, Cloud, Upload, LogIn, User } from 'lucide-react';
 import { useLazyAuth } from '../hooks/useLazyAuth';
@@ -130,11 +131,12 @@ export default function SettingsPage() {
   );
 
   const BrowserStorageSection = () => (
-    <div className="bg-white rounded-xl border border-warm-100 p-5">
-      <h2 className="font-bold text-warm-800 flex items-center gap-2 mb-4">
+    <CollapsibleCard title={
+      <h2 className="font-bold text-warm-800 flex items-center gap-2">
         <HardDrive className="w-5 h-5 text-warm-500" />
         文件持久化存储
       </h2>
+    }>
       {fileHandle ? (
         <div className="space-y-3">
           <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
@@ -172,7 +174,7 @@ export default function SettingsPage() {
           </button>
         </div>
       )}
-    </div>
+    </CollapsibleCard>
   );
 
   const handleClearAll = async () => {
@@ -221,11 +223,12 @@ export default function SettingsPage() {
       <BrowserStorageSection />
 
       {/* Brand Logo */}
-      <div className="bg-white rounded-xl border border-warm-100 p-5">
-        <h2 className="font-bold text-warm-800 flex items-center gap-2 mb-4">
+      <CollapsibleCard title={
+        <h2 className="font-bold text-warm-800 flex items-center gap-2">
           <ImageIcon className="w-5 h-5 text-warm-500" />
           自定义打印 Logo
         </h2>
+      }>
         <p className="text-xs text-warm-500 mb-4">
           上传您机构的 Logo，打印周计划表和活动记录时自动显示。仅打印可见，不影响屏幕显示。
         </p>
@@ -315,14 +318,15 @@ export default function SettingsPage() {
             </div>
           )}
         </div>
-      </div>
+      </CollapsibleCard>
 
       {/* Template Management */}
-      <div className="bg-white rounded-xl border border-warm-100 p-5">
-        <h2 className="font-bold text-warm-800 flex items-center gap-2 mb-4">
+      <CollapsibleCard title={
+        <h2 className="font-bold text-warm-800 flex items-center gap-2">
           <RotateCcw className="w-5 h-5 text-warm-500" />
           周计划模板
         </h2>
+      }>
         <p className="text-xs text-warm-500 mb-4">
           管理周计划表的模板，预设模板不可删除。自定义模板可在周计划页切换使用。
         </p>
@@ -459,7 +463,7 @@ export default function SettingsPage() {
             <Plus className="w-4 h-4" /> 新建自定义模板
           </button>
         )}
-      </div>
+      </CollapsibleCard>
 
       {/* Privacy Notice */}
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
@@ -483,8 +487,9 @@ export default function SettingsPage() {
       <AccountSection />
 
       {/* Data Management */}
-      <div className="bg-white rounded-xl border border-warm-100 p-5">
-        <h2 className="font-bold text-warm-800 mb-4">数据管理</h2>
+      <CollapsibleCard title={
+        <h2 className="font-bold text-warm-800">数据管理</h2>
+      }>
         <div className="space-y-3">
           <button
             onClick={handleExport}
@@ -521,7 +526,7 @@ export default function SettingsPage() {
             </div>
           </button>
         </div>
-      </div>
+      </CollapsibleCard>
 
       {/* About */}
       <div className="bg-white rounded-xl border border-warm-100 p-5">
