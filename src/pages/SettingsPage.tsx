@@ -821,12 +821,12 @@ function AccountSection() {
           <User className="w-5 h-5 text-warm-500" />
           账号管理
         </h2>
-        <div className="flex items-center gap-3 px-4 py-3 bg-warm-50 rounded-lg">
+        <NavLink to="/auth" className="flex items-center gap-3 px-4 py-3 bg-warm-50 rounded-lg hover:bg-warm-100 transition-colors">
           <LogIn className="w-5 h-5 text-warm-400" />
           <p className="text-sm text-warm-600">
             登录后可管理账号信息
           </p>
-        </div>
+        </NavLink>
       </div>
     );
   }
