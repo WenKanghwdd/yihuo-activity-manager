@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useStaffStore } from '../store/staffStore';
-import { ChevronLeft, ChevronRight, Copy, Plus, X, Users, Calendar, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Copy, Plus, X, Users, Calendar, Download, Edit3 } from 'lucide-react';
 import { generateId } from '../utils/helpers';
 
 const MONTH_NAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
@@ -32,6 +32,29 @@ export default function StaffSchedulePage() {
 
   const scheduleTableRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
+  const [shiftPicker, setShiftPicker] = useState<{ staffId: string; day: number } | null>(null);
+  const [customShift, setCustomShift] = useState('');
+
+  const SHIFT_OPTIONS = [
+    { value: '上班', label: '上班', color: 'text-blue-600 bg-blue-50' },
+    { value: '休息', label: '休息', color: 'text-warm-300' },
+    { value: '病假', label: '病假', color: 'text-red-600 bg-red-50' },
+    { value: '事假', label: '事假', color: 'text-orange-600 bg-orange-50' },
+  ] as const;
+
+  const shiftColors: Record<string, string> = {
+    '上班': 'text-blue-600',
+    '休息': 'text-warm-300',
+    '病假': 'text-red-500',
+    '事假': 'text-orange-500',
+  };
+
+  const shiftBg: Record<string, string> = {
+    '上班': 'bg-blue-50',
+    '休息': '',
+    '病假': 'bg-red-50',
+    '事假': 'bg-orange-50',
+  };
 
   const handleExportPDF = async () => {
     if (!scheduleTableRef.current || staffList.length === 0) return;
@@ -67,11 +90,10 @@ export default function StaffSchedulePage() {
     setEditingStaff(null);
   };
 
-  const handleToggle = async (staffId: string, day: number) => {
-    const schedule = getSchedule(staffId, year, month);
-    const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const current = schedule?.schedule[dateKey];
-    await setDayShift(staffId, year, month, day, current === '上班' ? '休息' : '上班');
+  const handleSetShift = async (staffId: string, day: number, value: string) => {
+    await setDayShift(staffId, year, month, day, value);
+    setShiftPicker(null);
+    setCustomShift('');
   };
 
   const handleCopyPrev = async () => {
@@ -270,22 +292,20 @@ export default function StaffSchedulePage() {
                     {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => {
                       const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                       const shift = schedule?.schedule[dateKey];
-                      const isOn = shift === '上班';
                       const date = new Date(year, month - 1, d);
                       const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                      const isOther = shift && !['上班','休息','病假','事假'].includes(shift);
                       return (
                         <td key={d}
-                          onClick={() => handleToggle(staff.id, d)}
+                          onClick={() => setShiftPicker({ staffId: staff.id, day: d })}
                           className={`text-center cursor-pointer transition-colors print:border print:border-gray-200 ${
-                            isOn
-                              ? 'bg-blue-50 hover:bg-blue-100'
-                              : 'hover:bg-warm-50'
-                          } ${isWeekend ? 'bg-red-50/30' : ''}`}
+                            shift ? (shiftBg[shift] || 'bg-purple-50') : ''
+                          } hover:bg-warm-100 ${isWeekend && !shift ? 'bg-red-50/30' : ''}`}
                           style={{ height: '36px', borderRight: '1px solid #fde0b8', borderBottom: '1px solid #fde0b8' }}>
                           <span className={`text-[9px] font-medium ${
-                            isOn ? 'text-blue-600' : 'text-warm-300'
+                            isOther ? 'text-purple-600' : (shiftColors[shift || ''] || 'text-warm-300')
                           }`}>
-                            {isOn ? '上班' : ''}
+                            {shift || ''}
                           </span>
                         </td>
                       );
@@ -299,7 +319,7 @@ export default function StaffSchedulePage() {
       )}
 
       {/* 图例 */}
-      <div className="flex items-center gap-4 text-xs text-warm-500 no-print">
+      <div className="flex items-center gap-4 text-xs text-warm-500 no-print flex-wrap">
         <div className="flex items-center gap-1">
           <div className="w-3 h-3 rounded bg-blue-50 border border-blue-200"></div>
           <span>上班</span>
@@ -308,7 +328,70 @@ export default function StaffSchedulePage() {
           <div className="w-3 h-3 rounded bg-white border border-warm-200"></div>
           <span>休息</span>
         </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded bg-red-50 border border-red-200"></div>
+          <span>病假</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded bg-orange-50 border border-orange-200"></div>
+          <span>事假</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded bg-purple-50 border border-purple-200"></div>
+          <span>其他</span>
+        </div>
       </div>
+
+      {/* 排班选择弹窗 */}
+      {shiftPicker && (() => {
+        const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(shiftPicker.day).padStart(2, '0')}`;
+        const current = getSchedule(shiftPicker.staffId, year, month)?.schedule[dateKey];
+        const staff = staffList.find(s => s.id === shiftPicker.staffId);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+            onClick={() => { setShiftPicker(null); setCustomShift(''); }}>
+            <div className="bg-white rounded-xl shadow-xl p-4 w-56 mx-4"
+              onClick={e => e.stopPropagation()}>
+              <h3 className="text-sm font-bold text-warm-800 mb-3 text-center">
+                {staff?.name} · {shiftPicker.day}日
+              </h3>
+              <div className="space-y-1.5">
+                {SHIFT_OPTIONS.map(opt => (
+                  <button key={opt.value}
+                    onClick={() => handleSetShift(shiftPicker.staffId, shiftPicker.day, opt.value)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                      current === opt.value
+                        ? 'ring-2 ring-warm-400 font-bold ' + opt.color
+                        : 'text-warm-700 hover:bg-warm-50'
+                    }`}>
+                    {opt.label}
+                  </button>
+                ))}
+                {/* 其他（可自定义） */}
+                <div className="pt-2 border-t border-warm-100">
+                  <div className="flex items-center gap-1">
+                    <input
+                      value={customShift}
+                      onChange={e => setCustomShift(e.target.value)}
+                      placeholder="输入班次名称"
+                      className="flex-1 px-2 py-1.5 border border-warm-200 rounded text-xs outline-none focus:ring-2 focus:ring-warm-400"
+                      onKeyDown={e => { if (e.key === 'Enter' && customShift.trim()) handleSetShift(shiftPicker.staffId, shiftPicker.day, customShift.trim()); }} />
+                    <button onClick={() => { if (customShift.trim()) handleSetShift(shiftPicker.staffId, shiftPicker.day, customShift.trim()); }}
+                      className="px-2.5 py-1.5 text-xs text-purple-600 bg-purple-50 rounded hover:bg-purple-100 transition-colors flex items-center gap-1 whitespace-nowrap">
+                      <Edit3 className="w-3 h-3" /> 自定义
+                    </button>
+                  </div>
+                  {current && !['上班','休息','病假','事假'].includes(current) && (
+                    <p className="text-[10px] text-purple-500 mt-1">当前：{current}</p>
+                  )}
+                </div>
+              </div>
+              <button onClick={() => { setShiftPicker(null); setCustomShift(''); }}
+                className="w-full mt-3 py-1.5 text-xs text-warm-500 hover:bg-warm-50 rounded-lg">关闭</button>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

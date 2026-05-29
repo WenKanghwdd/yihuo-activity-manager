@@ -13,7 +13,7 @@ interface StaffState {
   updateStaff: (staff: Staff) => Promise<void>;
   deleteStaff: (id: string) => Promise<void>;
   getSchedule: (staffId: string, year: number, month: number) => StaffMonthSchedule | undefined;
-  setDayShift: (staffId: string, year: number, month: number, day: number, value: '上班' | '休息') => Promise<void>;
+  setDayShift: (staffId: string, year: number, month: number, day: number, value: string) => Promise<void>;
   copyPrevMonth: (staffId: string, year: number, month: number) => Promise<boolean>;
 }
 

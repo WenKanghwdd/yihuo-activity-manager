@@ -112,8 +112,8 @@ export interface Staff {
   position: string; // 职位：经理/社工/实习生...
 }
 
-/** 按月排班，key = 'YYYY-MM-DD' */
-export type StaffSchedule = Record<string, '上班' | '休息'>;
+/** 按月排班，key = 'YYYY-MM-DD'，value = 上班/休息/病假/事假/其他自定义文字 */
+export type StaffSchedule = Record<string, string>;
 
 /** 某月某员工排班数据 */
 export interface StaffMonthSchedule {
