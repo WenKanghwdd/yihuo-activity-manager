@@ -217,12 +217,8 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* 数据存储 — Electron 桌面版 vs 浏览器版 */}
-      {isElectron() ? (
-        <DesktopStorageSection />
-      ) : (
-        <BrowserStorageSection />
-      )}
+      {/* 数据持久化 */}
+      <BrowserStorageSection />
 
       {/* Brand Logo */}
       <div className="bg-white rounded-xl border border-warm-100 p-5">
