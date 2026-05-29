@@ -69,7 +69,7 @@ export default function SettingsPage() {
       return;
     }
     const data = records.map((r) => ({
-      老人ID: r.elderlyId,
+      长者ID: r.elderlyId,
       日期: r.date,
       时间段ID: r.timeSlotId,
       活动名称: r.activityName,
@@ -435,7 +435,7 @@ export default function SettingsPage() {
         </h2>
         <p className="text-sm text-amber-700 leading-relaxed">
           所有数据仅存储于当前浏览器的 IndexedDB 和您指定的本地文件中，不上传任何服务器。
-          应用完全离线可用。老人个人信息请在打印纸质件时妥善保管。
+          应用完全离线可用。长者个人信息请在打印纸质件时妥善保管。
         </p>
       </div>
 

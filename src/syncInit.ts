@@ -6,11 +6,11 @@ export function initSyncStores() {
   // 活动库
   registerSyncStore('活动库', 'activities', () => getAll('activities'), (item) => putItem('activities', item));
 
-  // 老人信息
-  registerSyncStore('老人信息', 'elderly', () => getAll('elderly'), (item) => putItem('elderly', item));
+  // 长者信息
+  registerSyncStore('长者信息', 'elderly', () => getAll('elderly'), (item) => putItem('elderly', item));
 
-  // 老人分组
-  registerSyncStore('老人分组', 'elderly_groups', () => getAll('elderlyGroups'), (item) => putItem('elderlyGroups', item));
+  // 长者分组
+  registerSyncStore('长者分组', 'elderly_groups', () => getAll('elderlyGroups'), (item) => putItem('elderlyGroups', item));
 
   // 周计划
   registerSyncStore('周计划', 'weekly_plans', () => getAll('weeklyPlans'), (item) => putItem('weeklyPlans', item));

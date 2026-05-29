@@ -6,7 +6,7 @@ import { useLazyAuth } from '../../hooks/useLazyAuth';
 const navItems = [
   { path: '/', label: '活动计划', icon: Calendar },
   { path: '/activities', label: '活动库', icon: Library },
-  { path: '/elderly', label: '老人管理', icon: Users },
+  { path: '/elderly', label: '长者管理', icon: Users },
   { path: '/settings', label: '设置', icon: Settings },
 ];
 

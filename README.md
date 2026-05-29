@@ -30,9 +30,9 @@
 - 一键购买素材链接（淘宝搜索）
 - 新增自定义活动
 
-### C. 老人管理
+### C. 长者管理
 - Excel 导入（自动识别姓名/房间号列）
-- 老人卡片网格展示
+- 长者卡片网格展示
 - 拖拽排序
 - 批量标记参加/未参加活动
 - 周/日/月活动记录查看
@@ -65,7 +65,7 @@ yuehuo-activity-manager/
 │   │   ├── common/           # 通用组件
 │   │   ├── weeklyPlan/       # 周计划组件
 │   │   ├── activityLibrary/  # 活动库组件
-│   │   └── elderly/          # 老人管理组件
+│   │   └── elderly/          # 长者管理组件
 │   ├── pages/                # 页面
 │   ├── store/                # Zustand 状态管理
 │   ├── db/                   # IndexedDB 数据库层

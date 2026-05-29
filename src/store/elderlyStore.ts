@@ -80,7 +80,7 @@ export const useElderlyStore = create<ElderlyState>((set, get) => ({
     );
 
     if (!nameKey) {
-      throw new Error('未找到"老人姓名"列，请确认Excel包含该列');
+      throw new Error('未找到"长者姓名"列，请确认Excel包含该列');
     }
 
     for (const row of data) {

@@ -78,7 +78,7 @@ export interface ThemeConfig {
   accent: string;
 }
 
-// ===== 老人 =====
+// ===== 长者 =====
 export interface Elderly {
   id: string;
   name: string;
@@ -285,11 +285,11 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     name: '太极晨练',
     tags: ['运动健身', '节气养生'],
     images: [],
-    description: '清晨太极拳锻炼，适合各年龄层老人，促进血液循环，增强平衡能力。',
+    description: '清晨太极拳锻炼，适合各年龄层长者，促进血液循环，增强平衡能力。',
     venue: '户外广场 / 活动大厅',
     equipment: ['太极服（可选）', '太极剑（可选）'],
     minStaff: 1,
-    safetyTips: '注意地面防滑；高血压老人量力而行；建议穿舒适运动鞋。',
+    safetyTips: '注意地面防滑；高血压长者量力而行；建议穿舒适运动鞋。',
   },
   {
     name: '剪纸手工',
@@ -309,13 +309,13 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     venue: '多功能厅',
     equipment: ['音响设备', '麦克风', '歌词单', '投影仪'],
     minStaff: 1,
-    safetyTips: '控制活动时长不超过1小时；注意音量适中；体弱老人可坐着参与。',
+    safetyTips: '控制活动时长不超过1小时；注意音量适中；体弱长者可坐着参与。',
   },
   {
     name: '公园散步',
     tags: ['外出游玩', '运动健身'],
     images: [],
-    description: '组织老人到附近公园散步，呼吸新鲜空气，亲近自然。',
+    description: '组织长者到附近公园散步，呼吸新鲜空气，亲近自然。',
     venue: '附近公园',
     equipment: ['饮用水', '急救包', '折叠凳', '遮阳帽'],
     minStaff: 3,
@@ -325,7 +325,7 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     name: '节气养生讲座',
     tags: ['节气养生', '文娱欣赏'],
     images: [],
-    description: '结合二十四节气讲解养生知识，帮助老人科学养生。',
+    description: '结合二十四节气讲解养生知识，帮助长者科学养生。',
     venue: '活动室 / 多媒体室',
     equipment: ['投影仪', '讲稿', '茶水点心'],
     minStaff: 1,
@@ -409,7 +409,7 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     venue: '户外广场 / 活动大厅',
     equipment: ['音响', '教学视频', '舒适运动鞋'],
     minStaff: 1,
-    safetyTips: '注意地面平整；根据老人身体状况调整动作强度；备好饮用水。',
+    safetyTips: '注意地面平整；根据长者身体状况调整动作强度；备好饮用水。',
   },
   {
     name: '手工串珠',
@@ -429,17 +429,17 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     venue: '活动室',
     equipment: ['拼图板', '计时器', '计分板'],
     minStaff: 1,
-    safetyTips: '选择大块拼图方便老人操作；控制时间避免疲劳。',
+    safetyTips: '选择大块拼图方便长者操作；控制时间避免疲劳。',
   },
   {
     name: '春季踏青',
     tags: ['外出游玩', '节气养生'],
     images: [],
-    description: '组织老人到郊外或公园春游，感受自然风光。',
+    description: '组织长者到郊外或公园春游，感受自然风光。',
     venue: '郊外公园/景区',
     equipment: ['饮用水', '应急药品', '遮阳帽', '折叠椅', '点名册'],
     minStaff: 4,
-    safetyTips: '⚠️ 外出活动须填写外出申请表；一对一陪护行动不便老人；携带急救箱；关注天气预报。',
+    safetyTips: '⚠️ 外出活动须填写外出申请表；一对一陪护行动不便长者；携带急救箱；关注天气预报。',
   },
   {
     name: '折纸艺术',
@@ -505,7 +505,7 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     name: '回忆录写作',
     tags: ['文娱欣赏', '手工制作'],
     images: [],
-    description: '引导老人回忆人生经历，编写个人回忆录或口述历史。',
+    description: '引导长者回忆人生经历，编写个人回忆录或口述历史。',
     venue: '阅览室',
     equipment: ['笔记本', '笔', '录音设备(可选)', '老照片(自带)'],
     minStaff: 1,
@@ -529,7 +529,7 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     venue: '户外广场 / 活动大厅',
     equipment: ['瑜伽垫', '轻音乐', '音响'],
     minStaff: 1,
-    safetyTips: '关注呼吸节奏；动作轻柔缓慢；心脑血管疾病老人须医生许可。',
+    safetyTips: '关注呼吸节奏；动作轻柔缓慢；心脑血管疾病长者须医生许可。',
   },
   {
     name: '老电影放映周',
@@ -555,7 +555,7 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     name: '趣味运动会',
     tags: ['运动健身', '节庆活动'],
     images: [],
-    description: '设置适合老人的趣味运动项目，如投沙包、套圈、保龄球等。',
+    description: '设置适合长者的趣味运动项目，如投沙包、套圈、保龄球等。',
     venue: '户外操场 / 活动大厅',
     equipment: ['沙包', '套圈', '塑料保龄球', '计时器', '奖品'],
     minStaff: 3,
@@ -565,7 +565,7 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     name: '中秋赏月',
     tags: ['节庆活动', '外出游玩'],
     images: [],
-    description: '中秋夜组织老人户外赏月，吃月饼，讲传说。',
+    description: '中秋夜组织长者户外赏月，吃月饼，讲传说。',
     venue: '户外花园 / 天台',
     equipment: ['月饼', '茶水', '座椅', '灯笼', '毯子'],
     minStaff: 2,
@@ -625,7 +625,7 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     name: '手机使用教学',
     tags: ['文娱欣赏', '益智游戏'],
     images: [],
-    description: '教老人使用智能手机基本功能，跟上数字时代。',
+    description: '教长者使用智能手机基本功能，跟上数字时代。',
     venue: '活动室',
     equipment: ['投影仪', '智能手机', '教学PPT', '操作手册'],
     minStaff: 2,
@@ -679,7 +679,7 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     venue: '附近山丘/公园高地',
     equipment: ['登山杖', '饮用水', '急救包', '点心', '点名册'],
     minStaff: 4,
-    safetyTips: '⚠️ 提前评估老人体力；一对一陪护行动不便者；选择平缓路线；需家属签署知情同意书。',
+    safetyTips: '⚠️ 提前评估长者体力；一对一陪护行动不便者；选择平缓路线；需家属签署知情同意书。',
   },
   {
     name: '黏土手工',
@@ -725,7 +725,7 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     name: '集体生日会',
     tags: ['节庆活动', '文娱欣赏'],
     images: [],
-    description: '为当月过生日老人举办集体生日派对，增进归属感。',
+    description: '为当月过生日长者举办集体生日派对，增进归属感。',
     venue: '多功能厅',
     equipment: ['蛋糕', '气球', '生日帽', '小礼品', '音响'],
     minStaff: 2,
@@ -829,7 +829,7 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     venue: '活动大厅/走廊',
     equipment: ['软头飞镖', '磁力靶', '计分板'],
     minStaff: 1,
-    safetyTips: '使用安全软头飞镖；靶挂墙牢固；站位距离适合老人；围观者保持安全距离。',
+    safetyTips: '使用安全软头飞镖；靶挂墙牢固；站位距离适合长者；围观者保持安全距离。',
   },
   {
     name: '英语角',
@@ -979,7 +979,7 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     venue: '多功能厅',
     equipment: ['影视片段', '麦克风', '音响', '字幕'],
     minStaff: 1,
-    safetyTips: '选择老人熟悉影视片段；鼓励方言配音；欢乐为主。',
+    safetyTips: '选择长者熟悉影视片段；鼓励方言配音；欢乐为主。',
   },
   {
     name: '艾灸养生',
@@ -1015,7 +1015,7 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     name: '采摘果蔬',
     tags: ['外出游玩', '手工制作'],
     images: [],
-    description: '组织老人到农场采摘当季水果蔬菜，亲近自然。',
+    description: '组织长者到农场采摘当季水果蔬菜，亲近自然。',
     venue: '农场/种植园',
     equipment: ['篮子', '水', '遮阳帽', '点名册'],
     minStaff: 3,
@@ -1269,7 +1269,7 @@ export const DEFAULT_ACTIVITIES: Omit<Activity, 'id'>[] = [
     venue: '多功能厅/走廊',
     equipment: ['老照片征集', '展板', '标签', '茶点'],
     minStaff: 2,
-    safetyTips: '提前征集老人的老照片；讲述照片故事；唤起美好回忆。',
+    safetyTips: '提前征集长者的老照片；讲述照片故事；唤起美好回忆。',
   },
   {
     name: '竹竿舞体验',

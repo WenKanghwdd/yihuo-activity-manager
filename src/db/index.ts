@@ -25,11 +25,11 @@ export async function getDB(): Promise<IDBPDatabase> {
         cellStore.createIndex('planId', 'planId', { unique: false });
         cellStore.createIndex('planId_weekday', ['planId', 'weekday'], { unique: false });
       }
-      // 老人信息
+      // 长者信息
       if (!db.objectStoreNames.contains('elderly')) {
         db.createObjectStore('elderly', { keyPath: 'id' });
       }
-      // 老人分组
+      // 长者分组
       if (!db.objectStoreNames.contains('elderlyGroups')) {
         db.createObjectStore('elderlyGroups', { keyPath: 'id' });
       }

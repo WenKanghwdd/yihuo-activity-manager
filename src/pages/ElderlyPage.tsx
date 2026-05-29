@@ -321,7 +321,7 @@ export default function ElderlyPage() {
   };
 
   if (loading && !loaded) {
-    return <LoadingSpinner message="加载老人数据..." />;
+    return <LoadingSpinner message="加载长者数据..." />;
   }
 
   return (
@@ -340,7 +340,7 @@ export default function ElderlyPage() {
           className="flex items-center gap-1.5 px-3 py-2 bg-warm-500 text-white rounded-lg hover:bg-warm-600 text-sm font-medium transition-colors"
         >
           <UserPlus className="w-4 h-4" />
-          新增老人
+          新增长者
         </button>
         <select
           value={statusFilter}
@@ -478,7 +478,7 @@ export default function ElderlyPage() {
           </div>
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-warm-500">
-              共 {filteredElderly.length} 位老人
+              共 {filteredElderly.length} 位长者
             </p>
             <button
               onClick={selectedIds.length > 0 ? deselectAll : selectAll}
@@ -517,7 +517,7 @@ export default function ElderlyPage() {
             </DndContext>
             {filteredElderly.length === 0 && (
               <div className="text-center py-8 text-warm-400 text-sm">
-                {elderlyList.length === 0 ? '暂无老人数据，请导入或新增' : '无匹配结果'}
+                {elderlyList.length === 0 ? '暂无长者数据，请导入或新增' : '无匹配结果'}
               </div>
             )}
           </div>
@@ -540,7 +540,7 @@ export default function ElderlyPage() {
                   <button
                     onClick={() => setShowDeleteConfirm(selectedElderly.id)}
                     className="flex items-center gap-1 px-2 py-1.5 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors no-print"
-                    title="删除此老人"
+                    title="删除此长者"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     删除
@@ -648,7 +648,7 @@ export default function ElderlyPage() {
 
                 {wkTotal > 0 && <div className="mt-3 text-xs text-warm-500 leading-relaxed no-print">
                   这周一共安排了 <span className="text-warm-600 font-medium">{wkTotal}</span> 场活动，
-                  老人家参加了 <span className={wkDid > 0 ? "text-green-600 font-medium" : "text-warm-500"}>{wkDid}</span> 场{wkWording}
+                  长者家参加了 <span className={wkDid > 0 ? "text-green-600 font-medium" : "text-warm-500"}>{wkDid}</span> 场{wkWording}
                 </div>}
               {/* Daily Record */}
               {recordView === 'daily' && (
@@ -785,7 +785,7 @@ export default function ElderlyPage() {
 
                 {moTotal > 0 && <div className="mt-2 text-xs text-warm-500 leading-relaxed">
                   这个月一共安排了 <span className="text-warm-600 font-medium">{moTotal}</span> 场活动，
-                  老人家参加了 <span className={moDid > 0 ? "text-green-600 font-medium" : "text-warm-500"}>{moDid}</span> 场{moWording}
+                  长者家参加了 <span className={moDid > 0 ? "text-green-600 font-medium" : "text-warm-500"}>{moDid}</span> 场{moWording}
                 </div>}
               {/* 系统品牌标识（单页打印） */}
               <div className="hidden print:flex items-center gap-2 mb-3 px-1">
@@ -810,13 +810,13 @@ export default function ElderlyPage() {
                 </button>
               </div>
               <p className="text-[10px] text-warm-300 mt-2 text-right no-print">
-                ⚠️ 请妥善保管纸质件，老人信息请注意隐私保护
+                ⚠️ 请妥善保管纸质件，长者信息请注意隐私保护
               </p>
             </>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-warm-400">
               <Users className="w-12 h-12 mb-3" />
-              <p className="text-sm">请从左侧选择一位老人查看活动记录</p>
+              <p className="text-sm">请从左侧选择一位长者查看活动记录</p>
             </div>
           )}
         </div>
@@ -826,9 +826,9 @@ export default function ElderlyPage() {
       {showImport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
-            <h3 className="font-bold text-warm-800 mb-2">导入老人名单</h3>
+            <h3 className="font-bold text-warm-800 mb-2">导入长者名单</h3>
             <p className="text-xs text-warm-500 mb-4">
-              请上传 .xlsx 文件，要求包含「老人姓名」「房间号」列
+              请上传 .xlsx 文件，要求包含「长者姓名」「房间号」列
             </p>
             <div className="mb-4">
               <label className="block text-xs text-warm-600 mb-1">分组名称</label>
@@ -875,7 +875,7 @@ export default function ElderlyPage() {
       {showAddForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
-            <h3 className="font-bold text-warm-800 mb-4">新增老人</h3>
+            <h3 className="font-bold text-warm-800 mb-4">新增长者</h3>
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-warm-600 block mb-1">姓名 *</label>
@@ -941,7 +941,7 @@ export default function ElderlyPage() {
       <ConfirmDialog
         open={showDeleteConfirm !== null}
         title="确认删除"
-        message={`确定要删除老人「${elderlyList.find(e => e.id === showDeleteConfirm)?.name || ''}」吗？此操作不可撤销，关联的活动记录也将一并清除。`}
+        message={`确定要删除长者「${elderlyList.find(e => e.id === showDeleteConfirm)?.name || ''}」吗？此操作不可撤销，关联的活动记录也将一并清除。`}
         confirmText="确认删除"
         cancelText="取消"
         onConfirm={async () => {
@@ -962,7 +962,7 @@ export default function ElderlyPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 no-print">
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
             <h3 className="font-bold text-warm-800 mb-2">打印活动记录</h3>
-            <p className="text-sm text-warm-500 mb-4">已选 {selectedIds.length} 位老人</p>
+            <p className="text-sm text-warm-500 mb-4">已选 {selectedIds.length} 位长者</p>
             <div className="space-y-2 mb-4">
               <label className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
                 printMode === 'separate' ? 'border-warm-500 bg-warm-50' : 'border-warm-200 hover:border-warm-300'
@@ -976,7 +976,7 @@ export default function ElderlyPage() {
                 />
                 <div>
                   <p className="text-sm font-medium text-warm-700">每人一页</p>
-                  <p className="text-[10px] text-warm-400">每页打印一位老人的记录</p>
+                  <p className="text-[10px] text-warm-400">每页打印一位长者的记录</p>
                 </div>
               </label>
               <label className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
