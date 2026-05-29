@@ -933,9 +933,8 @@ export default function WeeklyPlanPage() {
                           )}
                         </div>
                         {/* ===== 额外活动（第二活动） ===== */}
-                        {(cell?.extraActivities || []).map((ea) => {
+                        {(cell?.extraActivities || []).map((ea, eaIdx) => {
                           const eaAct = activities.find(a => a.id === ea.activityId);
-                          if (!eaAct) return null;
                           return (
                             <div key={ea.activityId}
                               className="mt-1 rounded px-1 py-0.5"
@@ -943,8 +942,8 @@ export default function WeeklyPlanPage() {
                               <div className="flex items-center gap-1">
                                 <span className="text-[13px] font-bold leading-tight flex-1"
                                   style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
-                                  onClick={(e) => { e.stopPropagation(); setDetailActivity(eaAct); }}>
-                                  {eaAct.name}
+                                  onClick={(e) => { e.stopPropagation(); if (eaAct) setDetailActivity(eaAct); }}>
+                                  {eaAct?.name || ea.activityId}
                                 </span>
                                 {ea.venue && <span className="text-[9px] text-warm-400">{ea.venue}</span>}
                                 <button onClick={(e) => { e.stopPropagation();
