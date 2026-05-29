@@ -67,8 +67,15 @@ export default function StaffSchedulePage() {
   };
 
   const handleCopyPrev = async () => {
+    let copied = 0;
     for (const staff of staffList) {
-      await copyPrevMonth(staff.id, year, month);
+      const result = await copyPrevMonth(staff.id, year, month);
+      if (result) copied++;
+    }
+    if (copied === 0) {
+      alert('上月无排班数据可复制');
+    } else {
+      alert(`已从上月复制 ${copied} 位员工的排班`);
     }
   };
 

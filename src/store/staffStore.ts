@@ -14,7 +14,7 @@ interface StaffState {
   deleteStaff: (id: string) => Promise<void>;
   getSchedule: (staffId: string, year: number, month: number) => StaffMonthSchedule | undefined;
   setDayShift: (staffId: string, year: number, month: number, day: number, value: '上班' | '休息') => Promise<void>;
-  copyPrevMonth: (staffId: string, year: number, month: number) => Promise<void>;
+  copyPrevMonth: (staffId: string, year: number, month: number) => Promise<boolean>;
 }
 
 export const useStaffStore = create<StaffState>((set, get) => ({
@@ -73,13 +73,13 @@ export const useStaffStore = create<StaffState>((set, get) => ({
     }
   },
 
-  copyPrevMonth: async (staffId, year, month) => {
+  copyPrevMonth: async (staffId, year, month): Promise<boolean> => {
     const prevMonth = month === 1 ? 12 : month - 1;
     const prevYear = month === 1 ? year - 1 : year;
     const prevSchedule = get().schedules.find(
       (s) => s.staffId === staffId && s.year === prevYear && s.month === prevMonth
     );
-    if (!prevSchedule) return;
+    if (!prevSchedule) return false;
 
     const daysInPrev = new Date(prevYear, prevMonth, 0).getDate();
     const id = `${year}-${month}-${staffId}`;
@@ -103,5 +103,6 @@ export const useStaffStore = create<StaffState>((set, get) => ({
         newSchedule,
       ],
     }));
+    return true;
   },
 }));
