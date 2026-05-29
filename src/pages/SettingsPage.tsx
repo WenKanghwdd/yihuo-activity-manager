@@ -219,7 +219,9 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* 数据持久化 */}
+      {/* 账号管理 */}
+      <AccountSection />
+
       <BrowserStorageSection />
 
       {/* Brand Logo */}
@@ -476,12 +478,6 @@ export default function SettingsPage() {
           应用完全离线可用。长者个人信息请在打印纸质件时妥善保管。
         </p>
       </div>
-
-      {/* 数据持久化状态 */}
-      <DataBackupStatus />
-
-      {/* 云同步 */}
-      <CloudSyncSection />
 
       {/* 账号管理 */}
       <AccountSection />
