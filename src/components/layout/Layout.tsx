@@ -64,7 +64,7 @@ export default function Layout() {
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs text-white/70 hover:bg-white/10 hover:text-white transition-colors"
             >
               <User className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline max-w-[100px] truncate">{user.email}</span>
+              <span className="hidden sm:inline max-w-[100px] truncate">{user.user_metadata?.username || user.email}</span>
             </NavLink>
           ) : (
             <NavLink
@@ -115,7 +115,7 @@ export default function Layout() {
                 }
               >
                 {user ? <User className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
-                {user ? user.email?.split('@')[0] || '已登录' : '登录'}
+                {user ? user.user_metadata?.username || user.email?.split('@')[0] || '已登录' : '登录'}
               </NavLink>
             </nav>
           </div>

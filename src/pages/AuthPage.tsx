@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Mail, Lock, Loader2, AlertCircle, CheckCircle2, Shield, ArrowLeft, LogIn } from 'lucide-react';
+import { Mail, Lock, Loader2, AlertCircle, CheckCircle2, Shield, ArrowLeft, LogIn, User } from 'lucide-react';
 
 export default function AuthPage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -49,7 +50,7 @@ export default function AuthPage() {
         setUser(session?.user ?? null);
       }
     } else if (mode === 'signup') {
-      const { error: err } = await auth.signUp(email, password);
+      const { error: err } = await auth.signUp(email, password, username || undefined);
       if (err) {
         if (err.includes('User already registered')) setError('该邮箱已注册，请直接登录');
         else if (err.includes('network') || err.includes('fetch')) setError('网络连接失败');
@@ -108,10 +109,8 @@ export default function AuthPage() {
             <CheckCircle2 className="w-8 h-8 text-green-500" />
           </div>
           <h2 className="text-lg font-bold text-warm-800 mb-1">已登录</h2>
-          <p className="text-sm text-warm-500 mb-1 break-all">{user.email}</p>
-          {user.user_metadata?.username && (
-            <p className="text-xs text-warm-400 mb-4">用户名: {user.user_metadata.username}</p>
-          )}
+          <p className="text-sm font-medium text-warm-700 mb-1">{user.user_metadata?.username || '未设置用户名'}</p>
+          <p className="text-xs text-warm-400 mb-4 break-all">{user.email}</p>
           <div className="flex gap-2 justify-center">
             <button onClick={handleLogout}
               className="px-4 py-2 text-sm text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
@@ -187,6 +186,18 @@ export default function AuthPage() {
                 className="w-full pl-9 pr-3 py-2.5 border border-warm-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-warm-400" />
             </div>
           </div>
+
+          {mode === 'signup' && (
+            <div>
+              <label className="block text-sm font-medium text-warm-700 mb-1">用户名（选填）</label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400" />
+                <input type="text" value={username} onChange={e => setUsername(e.target.value)}
+                  placeholder="显示在右上角的昵称"
+                  className="w-full pl-9 pr-3 py-2.5 border border-warm-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-warm-400" />
+              </div>
+            </div>
+          )}
 
           {mode !== 'forgot' && (
             <div>

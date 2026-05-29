@@ -27,9 +27,13 @@ export async function getSession() {
   }
 }
 
-export async function signUp(email: string, password: string) {
+export async function signUp(email: string, password: string, username?: string) {
   const supabase = await getSupabase();
-  const { error } = await supabase.auth.signUp({ email, password });
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: username ? { data: { username } } : undefined,
+  });
   return { error: error?.message };
 }
 
