@@ -308,116 +308,118 @@ export default function ActivityLibraryPage() {
       <Modal open={showTagManager} onClose={() => setShowTagManager(false)} title="标签管理" width="max-w-md">
         <div className="space-y-4">
           {/* 新增标签 */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <input type="text" value={newTagName} onChange={(e) => setNewTagName(e.target.value)}
-              placeholder="新标签名称..." className="flex-1 px-3 py-2 border border-warm-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-orange-400" />
-            <div className="relative">
-              <button onClick={() => setColorPickerTag(colorPickerTag === '__new__' ? null : '__new__')}
-                className="w-7 h-7 rounded-full border-2 border-gray-300 transition-transform hover:scale-110 shrink-0"
-                style={{ backgroundColor: newTagColor }} />
-              {colorPickerTag === '__new__' && (
-                <div className="absolute left-0 bottom-full mb-2 z-50 bg-white border border-warm-200 rounded-lg shadow-xl p-2 grid grid-cols-5 gap-1.5"
-                  onMouseLeave={() => setColorPickerTag(null)}>
-                  {TAG_COLORS.map(c => (
-                    <button key={c} onClick={() => { setNewTagColor(c); setColorPickerTag(null); }}
-                      className="w-6 h-6 rounded-full border border-gray-200 hover:scale-110 transition-transform"
-                      style={{
-                        backgroundColor: c,
-                        outline: newTagColor === c ? '2px solid #333' : 'none',
-                        outlineOffset: '2px',
-                      }} />
-                  ))}
-                </div>
-              )}
-            </div>
+              placeholder="新标签名称..." className="flex-1 min-w-[120px] px-3 py-2 border border-warm-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-orange-400" />
+            <button onClick={() => setColorPickerTag(colorPickerTag === '__new__' ? null : '__new__')}
+              className="w-7 h-7 rounded-full border-2 border-gray-300 transition-transform hover:scale-110 shrink-0"
+              style={{ backgroundColor: newTagColor }} />
             <button onClick={handleAddTag} disabled={!newTagName.trim()}
               className="px-3 py-2 bg-indigo-500 text-white rounded-lg text-sm hover:bg-indigo-600 disabled:opacity-50">添加</button>
           </div>
+          {colorPickerTag === '__new__' && (
+            <div className="p-3 bg-white border border-warm-200 rounded-lg">
+              <div className="grid grid-cols-5 gap-2">
+                {TAG_COLORS.map(c => (
+                  <button key={c} onClick={() => { setNewTagColor(c); setColorPickerTag(null); }}
+                    className="w-8 h-8 rounded-full border border-gray-200 hover:scale-110 transition-transform mx-auto"
+                    style={{
+                      backgroundColor: c,
+                      outline: newTagColor === c ? '2px solid #333' : 'none',
+                      outlineOffset: '2px',
+                    }} />
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* 标签列表 */}
           <div className="space-y-2">
-            {allTags.map((tag) => {
+            {allTags.flatMap((tag) => {
               const cfg = tagStore.getTagConfig(tag);
               const isCustom = tagStore.customTags.includes(tag);
               const isHidden = tagStore.hiddenTags.includes(tag);
               const displayName = tagStore.getDisplayName(tag);
-              if (isHidden) return null;
-              return (
-                <div key={tag} className="flex items-center justify-between p-2 rounded-lg bg-warm-50">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <div className="w-4 h-4 rounded shrink-0" style={{ backgroundColor: cfg.color }} />
-                    {editingTag === tag ? (
-                      <input type="text" value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        onBlur={async () => {
-                          if (editName.trim() && editName.trim() !== tag) {
-                            await tagStore.renameTag(tag, editName.trim());
-                          }
-                          setEditingTag(null);
-                        }}
-                        onKeyDown={async (e) => {
-                          if (e.key === 'Enter') {
+              if (isHidden) return [];
+              return [
+                <div key={tag} className="flex flex-col p-2 rounded-lg bg-warm-50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className="w-4 h-4 rounded shrink-0" style={{ backgroundColor: cfg.color }} />
+                      {editingTag === tag ? (
+                        <input type="text" value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          onBlur={async () => {
                             if (editName.trim() && editName.trim() !== tag) {
                               await tagStore.renameTag(tag, editName.trim());
                             }
                             setEditingTag(null);
-                          }
-                          if (e.key === 'Escape') setEditingTag(null);
-                        }}
-                        className="px-2 py-0.5 text-sm border border-orange-400 rounded outline-none focus:ring-2 focus:ring-orange-300 w-28"
-                        autoFocus />
-                    ) : (
-                      <span className="text-sm text-gray-700 truncate">{displayName}</span>
-                    )}
-                    {isCustom && <span className="text-[10px] text-warm-400 shrink-0">(自定义)</span>}
-                    <span className="text-[10px] text-warm-400 shrink-0">({tagCounts[tag] || 0}个活动)</span>
-                  </div>
-                  <div className="flex gap-1 shrink-0">
-                    {/* 重命名 */}
-                    <button onClick={() => {
-                      if (editingTag === tag) {
-                        setEditingTag(null);
-                      } else {
-                        setEditingTag(tag);
-                        setEditName(displayName);
-                      }
-                    }}
-                      className="px-2 py-1 text-[10px] border border-warm-200 rounded hover:bg-warm-100">
-                      {editingTag === tag ? '取消' : '重命名'}
-                    </button>
-                    {/* 改色 */}
-                    <div className="relative">
+                          }}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter') {
+                              if (editName.trim() && editName.trim() !== tag) {
+                                await tagStore.renameTag(tag, editName.trim());
+                              }
+                              setEditingTag(null);
+                            }
+                            if (e.key === 'Escape') setEditingTag(null);
+                          }}
+                          className="px-2 py-0.5 text-sm border border-orange-400 rounded outline-none focus:ring-2 focus:ring-orange-300 w-28"
+                          autoFocus />
+                      ) : (
+                        <span className="text-sm text-gray-700 truncate">{displayName}</span>
+                      )}
+                      {isCustom && <span className="text-[10px] text-warm-400 shrink-0">(自定义)</span>}
+                      <span className="text-[10px] text-warm-400 shrink-0">({tagCounts[tag] || 0}个活动)</span>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      {/* 重命名 */}
+                      <button onClick={() => {
+                        if (editingTag === tag) {
+                          setEditingTag(null);
+                        } else {
+                          setEditingTag(tag);
+                          setEditName(displayName);
+                        }
+                      }}
+                        className="px-2 py-1 text-[10px] border border-warm-200 rounded hover:bg-warm-100">
+                        {editingTag === tag ? '取消' : '重命名'}
+                      </button>
+                      {/* 改色 */}
                       <button onClick={() => setColorPickerTag(colorPickerTag === tag ? null : tag)}
-                        className="px-2 py-1 text-[10px] border border-warm-200 rounded hover:bg-warm-100">改色</button>
-                      {colorPickerTag === tag && (
-                        <div className="absolute right-0 bottom-full mb-1 z-50 bg-white border border-warm-200 rounded-lg shadow-xl p-2 grid grid-cols-5 gap-1.5"
-                          onMouseLeave={() => setColorPickerTag(null)}>
-                          {TAG_COLORS.map(c => (
-                            <button key={c} onClick={async () => {
-                              await tagStore.updateTagColor(tag, c, c + '20');
-                              setColorPickerTag(null);
-                            }}
-                              className="w-5 h-5 rounded-full border border-gray-200 hover:scale-110 transition-transform"
-                              style={{ backgroundColor: c }} />
-                          ))}
-                        </div>
+                        className="px-2 py-1 text-[10px] border border-warm-200 rounded hover:bg-warm-100">
+                        {colorPickerTag === tag ? '收起' : '改色'}
+                      </button>
+                      {/* 预设标签：隐藏；自定义标签：删除 */}
+                      {isCustom ? (
+                        <button onClick={() => tagStore.removeCustomTag(tag)}
+                          className="px-2 py-1 text-[10px] text-red-500 hover:bg-red-50 rounded">
+                          <X className="w-3 h-3" />
+                        </button>
+                      ) : (
+                        <button onClick={() => tagStore.toggleHiddenTag(tag)}
+                          className="px-2 py-1 text-[10px] text-warm-500 hover:bg-warm-100 rounded">
+                          隐藏
+                        </button>
                       )}
                     </div>
-                    {/* 预设标签：隐藏；自定义标签：删除 */}
-                    {isCustom ? (
-                      <button onClick={() => tagStore.removeCustomTag(tag)}
-                        className="px-2 py-1 text-[10px] text-red-500 hover:bg-red-50 rounded">
-                        <X className="w-3 h-3" />
-                      </button>
-                    ) : (
-                      <button onClick={() => tagStore.toggleHiddenTag(tag)}
-                        className="px-2 py-1 text-[10px] text-warm-500 hover:bg-warm-100 rounded">
-                        隐藏
-                      </button>
-                    )}
                   </div>
+                  {colorPickerTag === tag && (
+                    <div className="p-3 bg-white border border-warm-200 rounded-lg mt-2">
+                      <div className="grid grid-cols-5 gap-2">
+                        {TAG_COLORS.map(c => (
+                          <button key={c} onClick={async () => {
+                            await tagStore.updateTagColor(tag, c, c + '20');
+                            setColorPickerTag(null);
+                          }}
+                            className="w-7 h-7 rounded-full border border-gray-200 hover:scale-110 transition-transform mx-auto"
+                            style={{ backgroundColor: c }} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              );
+              ];
             })}
           </div>
 
